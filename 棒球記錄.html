@@ -444,7 +444,7 @@ const startRundown=x=>{V.rd={x,seq:[]};R()};
 const startEditLog=iStr=>{const i=+iStr,g=G(),o=calc(g),ov=g.txtOvr&&g.txtOvr[i],sum=o.log[i].sum,items=(ov?ov.items:(o.log[i].items||[]).map(x=>x.s));V.editLog={i,sum,text:items.join('\n')};R();setTimeout(()=>{const e=$('elv');if(e)e.focus()},50)};
 const saveEditLog=()=>{const g=G(),lines=($('elv').value||'').split('\n').filter(x=>x.trim());g.txtOvr=g.txtOvr||{};g.txtOvr[V.editLog.i]={items:lines};V.editLog=null;save();R()};
 const resetEditLog=()=>{const g=G();if(g.txtOvr)delete g.txtOvr[V.editLog.i];V.editLog=null;save();R()};
-function editLogModal(){return `<div class=mo><div class=md><b>文字紀錄修改</b><div class=lg2>標題：${V.editLog.sum.replace(/<[^>]+>/g,'')}（標題不能修改，只能修改底下的逐項內容）</div><textarea id=elv rows=6 style="width:100%;box-sizing:border-box;font:inherit">${V.editLog.text}</textarea><div class=row>${btn('確定','saveEditLog()','pri')}${btn('還原成系統預設','resetEditLog()')}${btn('取消','V.editLog=null;R()')}</div></div></div>`}
+function editLogModal(){return `<div class=mo><div class=md><b>文字紀錄修改</b><textarea id=elv rows=6 style="width:100%;box-sizing:border-box;font:inherit">${V.editLog.text}</textarea><div class=row>${btn('確定','saveEditLog()','pri')}${btn('還原成系統預設','resetEditLog()')}${btn('取消','V.editLog=null;R()')}</div></div></div>`}
 const h2Next=()=>{if(!(V.h2.et&&V.h2.ef))return;const g=G(),simEv=[...g.ev,{t:'p',k:'X'},{t:'pa',res:V.pend,fp:V.seq.slice(),rbi:0,rv:V.rv||undefined,bt:V.bt||undefined}],o=calc({...g,ev:simEv}),rv={};for(let x=1;x<4;x++)if(o.bs[x])rv[x]=x;V.h2.rv=rv;V.h2.st=2;R()};
 const setH2r=(x,d)=>{V.h2.rv[x]=d;R()};
 const h2Ok=()=>{V.pendHep={et:V.h2.et,ef:V.h2.ef,rv:V.h2.rv};V.h2=null;V.st=2;R()};
