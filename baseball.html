@@ -561,7 +561,9 @@ function teamStatsDF(t,A){const cols=COLS.df,on=k=>!(S.cfg&&S.cfg.df&&S.cfg.df[k
   const posEntries=Object.entries(A.df[p.id].pos).sort((a,b)=>(b[1].PO+b[1].A+b[1].E)-(a[1].PO+a[1].A+a[1].E));
   const key='team:df:'+t.id+':'+p.id,open=!!V.op[key];
   if(!posEntries.length){rows.push(`<tr><td style="${stk(0,60)}">${pn(p.id)}</td><td style="${stk(60,30)}">-</td><td style="${stk(90,20)}"></td>${vis.map(c=>`<td>${c[2]({G:A.df[p.id].G,PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0},p)}</td>`).join('')}</tr>`);return}
-  const shown=(open||posEntries.length<=1)?posEntries:posEntries.slice(0,1);
+  if(posEntries.length>1&&!open){const tog=`<span class=tog onclick="V.op['${key}']=!V.op['${key}'];R()">∨</span>`,so=tot(p.id);
+   rows.push(`<tr><td style="${stk(0,60)}">${pn(p.id)}</td><td style="${stk(60,30)}">${POSE[p.pos]||''}</td><td style="${stk(90,20)}">${tog}</td>${vis.map(c=>`<td>${c[2](so,p)}</td>`).join('')}</tr>`);return}
+  const shown=posEntries;
   shown.forEach(([posEng,st],i)=>{const last=i==shown.length-1,tog=(last&&posEntries.length>1)?`<span class=tog onclick="V.op['${key}']=!V.op['${key}'];R()">${open?'∧':'∨'}</span>`:'';
    const so={G:A.df[p.id].G,...st};
    rows.push(`<tr><td style="${stk(0,60)}">${i==0?pn(p.id):''}</td><td style="${stk(60,30)}">${posEng}</td><td style="${stk(90,20)}">${tog}</td>${vis.map(c=>`<td>${c[2](so,p)}</td>`).join('')}</tr>`)})
