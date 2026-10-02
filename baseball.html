@@ -124,9 +124,10 @@ const tot=(o,s)=>o.sc[s].reduce((x,y)=>x+(y||0),0);
 function calc(g){
  const o={in:1,top:true,outs:0,b:0,s:0,bs:[null,null,null,null],bi:{a:0,h:0},sc:{a:[],h:[]},H:{a:0,h:0},E:{a:0,h:0},lu:{a:g.lu.a.map(x=>x.p),h:g.lu.h.map(x=>x.p)},pos:{a:g.lu.a.map(x=>x.pos),h:g.lu.h.map(x=>x.pos)},gone:{a:[],h:[]},fresh:true,fd:{},pit:{},bat:{},pt:{},log:[],lead:[]};
  const B=id=>o.bat[id]||(o.bat[id]={PA:0,AB:0,H:0,d2:0,d3:0,HR:0,RBI:0,SB:0,BB:0,HBP:0,K:0,SF:0,SH:0,GO:0,AO:0});
- const Q=id=>o.pt[id]||(o.pt[id]={outs:0,P:0,S:0,B:0,K:0,BB:0,HBP:0,H:0,R:0,ER:0,BF:0});
+ const Q=id=>o.pt[id]||(o.pt[id]={outs:0,P:0,S:0,B:0,K:0,BB:0,HBP:0,H:0,R:0,ER:0,BF:0,GS:0,REL:0,SV:0,HLD:0});
+ const pitEnter=(sd,pid)=>{if(!pid)return;o.pitEntry=o.pitEntry||{a:{},h:{}};if(o.pitEntry[sd][pid])return;o.pitEntry[sd][pid]={lead:tot(o,sd)-tot(o,sd=='a'?'h':'a'),runners:[1,2,3].filter(x=>o.bs[x]).length}};
  o.hist={a:[],h:[]};o.pitOrder={a:[],h:[]};o.box=[];o.pendDef={a:{},h:{}};o.pendDHCancel={a:{},h:{}};o.collideN=0;o.lastPA=null;
- ['a','h'].forEach(s=>{o.pit[s]=(g.sp&&g.sp[s])||(g.lu[s].find(x=>x.pos=='投')||g.lu[s][0]).p;Q(o.pit[s]);o.pitOrder[s].push(o.pit[s]);o.hist[s]=g.lu[s].map((x,i)=>[{pid:x.p,tag:'',positions:[POSE[o.pos[s][i]]||'']}])});
+ ['a','h'].forEach(s=>{o.pit[s]=(g.sp&&g.sp[s])||(g.lu[s].find(x=>x.pos=='投')||g.lu[s][0]).p;Q(o.pit[s]);pitEnter(s,o.pit[s]);o.pitOrder[s].push(o.pit[s]);o.hist[s]=g.lu[s].map((x,i)=>[{pid:x.p,tag:'',positions:[POSE[o.pos[s][i]]||'']}])});
  let cur=[],cb=null,man=false,oc=0,mk=null,noAuto=false,rc=0,paRc0=0,fdirTxt='',bnameTxt='';
  const pname=id=>{const p=P(id);return p?p.name:''};
  const bT=t=>bnameTxt?`打者 ${bnameTxt} ${t}`:`打者${t}`;
@@ -285,7 +286,7 @@ function calc(g){
    if(ed){o.log.push({in:inn,top:tp,sum:`${bo(bid)}：打席未完成（三出局）`,pi,items:cur,runs:rc-paRc0});o.lastPA=cur;cur=[];paRc0=rc}}
   else if(e.t=='bk'){cb=null;const parts=[];for(let x=3;x>0;x--){const r=o.bs[x];if(!r)continue;o.bs[x]=null;if(x==3){rn(r,0);parts.push(`三壘跑者 ${pname(r.id)} 回本壘得分`)}else{o.bs[x+1]=r;parts.push(`${BN[x]}跑者 ${pname(r.id)} 上${BN[x+1]}`)}}cur.push({s:`↳ 投手犯規：${parts.reverse().join('，')}`})}
   else if(e.t=='tb'){if(e.pid){o.bs[e.base]={id:e.pid,p:o.pit[o.top?'h':'a'],u:true};note(`突破僵局制：${bo(e.pid)} 上${BN[e.base]}`)}else{o.bs[e.base]=null;note(`突破僵局制：清除${BN[e.base]}跑者`)}}
-  else if(e.t=='pc'){const old=o.pit[e.side],sl=o.lu[e.side].indexOf(old);o.pit[e.side]=e.pid;Q(e.pid);o.pitOrder[e.side].push(e.pid);o.gone[e.side].push(old);if(sl>=0&&o.pos[e.side][sl]=='投'){o.lu[e.side][sl]=e.pid;o.hist[e.side][sl].push({pid:e.pid,tag:'',positions:[POSE[o.pos[e.side][sl]]||'']})}note(`更換投手：${pn(old)} ➡︎ ${pn(e.pid)}`)}
+  else if(e.t=='pc'){const old=o.pit[e.side],sl=o.lu[e.side].indexOf(old);o.pit[e.side]=e.pid;Q(e.pid);pitEnter(e.side,e.pid);o.pitOrder[e.side].push(e.pid);o.gone[e.side].push(old);if(sl>=0&&o.pos[e.side][sl]=='投'){o.lu[e.side][sl]=e.pid;o.hist[e.side][sl].push({pid:e.pid,tag:'',positions:[POSE[o.pos[e.side][sl]]||'']})}note(`更換投手：${pn(old)} ➡︎ ${pn(e.pid)}`)}
   else if(e.t=='dfc'){const side=e.side,chain=e.order;
    const roleInfo=r=>{const idx=o.pos[side].findIndex(p=>POSN[p]==r);return idx<0?{slot:null,pid:r==1?o.pit[side]:null}:{slot:idx,pid:o.lu[side][idx]}};
    const info2=chain.map(roleInfo);
@@ -296,15 +297,15 @@ function calc(g){
     if(info2[i].slot!=null){
      o.pos[side][info2[i].slot]=lbl;delete o.pendDef[side][info2[i].slot];
      const hs=o.hist[side][info2[i].slot];if(hs&&hs.length)hs[hs.length-1].positions.push(POSE[lbl]||'');
-     if(nextRole==1){o.pit[side]=mover;if(mover){Q(mover);o.pitOrder[side].push(mover)}}
+     if(nextRole==1){o.pit[side]=mover;if(mover){Q(mover);pitEnter(side,mover);o.pitOrder[side].push(mover)}}
     }
     notes.push(`更換守備：${pn(mover)} ➡︎ ${nextRole==1?'投手':FN[nextRole]} ${pn(info2[i+1].pid)}`);
    }
    // last existing player leaves; the incoming sub takes the FIRST role in his vacated slot
    const last=info2[info2.length-1],leaving=last.pid,firstRole=chain[0],lbl0=firstRole==1?'投':POSNAME[firstRole];
    if(leaving)o.gone[side].push(leaving);
-   if(last.slot!=null){o.lu[side][last.slot]=e.subPid;o.pos[side][last.slot]=lbl0;o.hist[side][last.slot].push({pid:e.subPid,tag:'DEF',positions:[POSE[lbl0]||'']});delete o.pendDef[side][last.slot];if(firstRole==1){o.pit[side]=e.subPid;if(e.subPid){Q(e.subPid);o.pitOrder[side].push(e.subPid)}}}
-   else if(firstRole==1){o.pit[side]=e.subPid;if(e.subPid){Q(e.subPid);o.pitOrder[side].push(e.subPid)}}
+   if(last.slot!=null){o.lu[side][last.slot]=e.subPid;o.pos[side][last.slot]=lbl0;o.hist[side][last.slot].push({pid:e.subPid,tag:'DEF',positions:[POSE[lbl0]||'']});delete o.pendDef[side][last.slot];if(firstRole==1){o.pit[side]=e.subPid;if(e.subPid){Q(e.subPid);pitEnter(side,e.subPid);o.pitOrder[side].push(e.subPid)}}}
+   else if(firstRole==1){o.pit[side]=e.subPid;if(e.subPid){Q(e.subPid);pitEnter(side,e.subPid);o.pitOrder[side].push(e.subPid)}}
    notes.unshift(`更換守備：${pn(e.subPid)} ➡︎ ${firstRole==1?'投手':FN[firstRole]} ${pn(leaving)}`);
    notes.forEach(t=>note(t));}
   else if(e.t=='df'){const old=o.lu[e.side][e.slot];o.gone[e.side].push(old);o.lu[e.side][e.slot]=e.pid;o.hist[e.side][e.slot].push({pid:e.pid,tag:'DEF',positions:[POSE[o.pos[e.side][e.slot]]||'']});delete o.pendDef[e.side][e.slot];note(`更換守備：${pn(e.pid)} ➡︎ ${FN[POSN[o.pos[e.side][e.slot]]]||''} ${pn(old)}`)}
@@ -319,7 +320,7 @@ function calc(g){
      const oldPit=o.pit[side];
      o.pos[side][dhIdx]='投';
      const hsD=o.hist[side][dhIdx];hsD[hsD.length-1].positions.push('P');
-     o.pit[side]=dhPid;Q(dhPid);o.pitOrder[side].push(dhPid);
+     o.pit[side]=dhPid;Q(dhPid);pitEnter(side,dhPid);o.pitOrder[side].push(dhPid);
      o.gone[side].push(oldPit);
      delete o.pendDef[side][dhIdx];
      note(`更換守備：${pn(dhPid)}　指定打擊 ➡︎ 投手。`);
@@ -348,7 +349,7 @@ function calc(g){
     for(let i=0;i<info2.length-1;i++){
      const mover=info2[i].pid,nextRole=chainRoles[i+1],nextInfo=info2[i+1];
      if(nextRole==1){
-      o.pit[side]=mover;Q(mover);o.pitOrder[side].push(mover);
+      o.pit[side]=mover;Q(mover);pitEnter(side,mover);o.pitOrder[side].push(mover);
       o.pos[side][info2[i].slot]='投';
       if(chainRoles[i]=='DH'){const hsD=o.hist[side][info2[i].slot];hsD[hsD.length-1].positions.push('P')}
       notes.push(`更換守備：${pn(mover)}　${chainRoles[i]=='DH'?'指定打擊':FN[chainRoles[i]]} ➡︎ 投手。`);
@@ -377,7 +378,7 @@ function calc(g){
    if(n<2||missing.some(x=>ord[x]!=1)||missing.length>1)return;
    if(missing.length==1&&n==2){
     const px=missing[0],fx=1-px,otherIdx=idxs[fx],oldPitcher=o.pit[side],newPitcher=o.lu[side][otherIdx];
-    o.pit[side]=newPitcher;Q(newPitcher);
+    o.pit[side]=newPitcher;Q(newPitcher);pitEnter(side,newPitcher);
     o.lu[side][otherIdx]=oldPitcher;
     const hs=o.hist[side][otherIdx];hs.push({pid:oldPitcher,tag:'',positions:[POSE[o.pos[side][otherIdx]]||'']});
     delete o.pendDef[side][otherIdx];
@@ -387,7 +388,7 @@ function calc(g){
    }
    const players=idxs.map(i=>o.lu[side][i]),oldPit=o.pit[side];
    idxs.forEach((i,x)=>{o.pos[side][i]=POSNAME[ord[(x+1)%n]];const hs=o.hist[side][i],cur2=hs[hs.length-1];cur2.positions.push(POSE[o.pos[side][i]]||'');delete o.pendDef[side][i]});
-   const ni=o.pos[side].findIndex(p=>p=='投');if(ni>=0&&o.lu[side][ni]!=oldPit){o.pit[side]=o.lu[side][ni];Q(o.pit[side])}
+   const ni=o.pos[side].findIndex(p=>p=='投');if(ni>=0&&o.lu[side][ni]!=oldPit){o.pit[side]=o.lu[side][ni];Q(o.pit[side]);pitEnter(side,o.pit[side])}
    idxs.forEach((i,x)=>{note(`更換守備：${pn(players[x])}　${FN[ord[x]]} ➡︎ ${FN[ord[(x+1)%n]]}。`)});
   }
   else if(e.t=='pr'){const r=o.bs[e.base];if(!r)return;const sd=o.top?'a':'h',sl=o.lu[sd].indexOf(r.id);if(sl>=0){o.lu[sd][sl]=e.pid;o.hist[sd][sl].push({pid:e.pid,tag:'PR',positions:[POSE[o.pos[sd][sl]]||'']});o.pendDef[sd][sl]=true}o.gone[sd].push(r.id);o.bs[e.base]={...r,id:e.pid};note(`更換代跑：${pn(r.id)} ➡︎ ${pn(e.pid)}`)}
@@ -399,6 +400,15 @@ function calc(g){
  if(g.fin||o.over){const a=tot(o,'a'),h=tot(o,'h'),w=a>h?'a':h>a?'h':0;
   if(w){const s=w=='a'?1:-1;let i=-1;o.lead.forEach((l,j)=>{if(l.d*s>0&&(j==0||o.lead[j-1].d*s<=0))i=j});
    if(i>=0){const l=o.lead[i];Q(l[w]).W=1;Q(l[w=='a'?'h':'a']).L=1}}}
+ ['a','h'].forEach(side=>{const order=o.pitOrder[side],won=(g.fin||o.over)&&tot(o,side)>tot(o,side=='a'?'h':'a');
+  order.forEach((pid,idx)=>{const q=o.pt[pid];if(!q)return;
+   if(idx==0)q.GS=1;else q.REL=1;
+   const en=(o.pitEntry&&o.pitEntry[side][pid])||{lead:0,runners:0},saveSit=en.lead>=1&&(en.lead<=3||en.lead<=en.runners+1||q.outs>=9);
+   if(!saveSit||q.outs<1||q.W)return;
+   const lostLead=(o.lead||[]).some(e=>e[side]==pid&&(side=='a'?e.d:-e.d)<=0);
+   if(idx==order.length-1){if(won&&!lostLead)q.SV=1}
+   else if(!lostLead)q.HLD=1;
+  })});
  return o}
 
 /* ===== 操作 ===== */
@@ -537,14 +547,14 @@ const obp=x=>(x.H+x.BB+x.HBP)/(x.AB+x.BB+x.HBP+x.SF),slg=x=>(x.H+x.d2+2*x.d3+3*x
 const COLS={
  bat:[['G','場次',x=>x.G],['PA','打席',x=>x.PA],['AB','打數',x=>x.AB],['H','安打',x=>x.H],['H1','一安',x=>x.H-x.d2-x.d3-x.HR],['H2','二安',x=>x.d2],['H3','三安',x=>x.d3],['HR','全壘打',x=>x.HR],['XBH','長打',x=>x.d2+x.d3+x.HR],['RBI','打點',x=>x.RBI],['SB','盜壘',x=>x.SB],['BB','四死',x=>x.BB+x.HBP],['K','被三振',x=>x.K],['SH','犠短',x=>x.SH],['SF','犠飛',x=>x.SF],['AVG','打擊率',x=>f3(x.H/x.AB)],['OBP','上壘率',x=>f3(obp(x))],['SLG','長打率',x=>f3(slg(x))],['OPS','OPS',x=>f3(obp(x)+slg(x))],['OPSp','OPS+',(x,p,teamOPS)=>{const o=obp(x)+slg(x);return isFinite(o)&&teamOPS?Math.round(o/teamOPS*100):'-'}],['GAO','滾飛出局比',x=>f2(x.GO/x.AO)],['BBK','保送三振比',x=>f2(x.BB/x.K)]],
  df:[['G','場次',x=>x.G],['FP','守備率',x=>f3((x.PO+x.A)/(x.PO+x.A+x.E))],['TC','守備機會',x=>x.PO+x.A+x.E],['E','失誤',x=>x.E],['PO','刺殺',x=>x.PO],['A','助殺',x=>x.A],['DP','雙殺',x=>x.DP],['PB','捕逸',x=>x.PB],['CS','阻殺',x=>x.CS],['SBA','被盜成功',x=>x.SBA]],
- pt:[['G','場次',x=>x.G],['IP','局數',x=>Math.floor(x.outs/3)+'.'+x.outs%3],['P','用球',x=>x.P],['S','好球',x=>x.S],['B','壞球',x=>x.B],['K','奪三振',x=>x.K],['BB','四壞',x=>x.BB],['HBP','觸身',x=>x.HBP],['R','失分',x=>x.R],['ER','自責',x=>x.ER],['UER','非自責',x=>x.R-x.ER],['W','勝',x=>x.W],['L','敗',x=>x.L],['ND','無關勝敗',x=>x.ND],['ERA','ERA',x=>f2(x.ER*27/x.outs)],['WHIP','WHIP',x=>f2((x.BB+x.H)*3/x.outs)],['K9','K9',x=>f2(x.K*27/x.outs)]]};
+ pt:[['G','場次',x=>x.G],['GS','先發',x=>x.GS],['REL','後援',x=>x.REL],['IP','局數',x=>Math.floor(x.outs/3)+'.'+x.outs%3],['P','用球',x=>x.P],['S','好球',x=>x.S],['B','壞球',x=>x.B],['K','奪三振',x=>x.K],['BB','四壞',x=>x.BB],['HBP','觸身',x=>x.HBP],['R','失分',x=>x.R],['ER','自責',x=>x.ER],['UER','非自責',x=>x.R-x.ER],['W','勝',x=>x.W],['L','敗',x=>x.L],['SV','救援成功',x=>x.SV],['HLD','中繼成功',x=>x.HLD],['ND','無關勝敗',x=>x.ND],['ERA','ERA',x=>f2(x.ER*27/x.outs)],['WHIP','WHIP',x=>f2((x.BB+x.H)*3/x.outs)],['K9','K9',x=>f2(x.K*27/x.outs)]]};
 function agg(tid,rng,upto){const t=T(tid),r={bat:{},df:{},pt:{}},ui=upto?S.games.indexOf(upto):-1,upOK=g=>{if(!upto||g===upto)return true;const dx=g.date||'',du=upto.date||'';return dx!==du?dx<du:S.games.indexOf(g)>ui},inR=g=>{if(!upOK(g))return false;if(!rng)return true;const d=g.date||'';if(rng.from&&(!d||d<rng.from))return false;if(rng.to&&(!d||d>rng.to))return false;return true};
- t.players.forEach(p=>{r.bat[p.id]={G:0,PA:0,AB:0,H:0,d2:0,d3:0,HR:0,RBI:0,SB:0,BB:0,HBP:0,K:0,SF:0,SH:0,GO:0,AO:0};r.df[p.id]={G:0,pos:{}};r.pt[p.id]={G:0,outs:0,P:0,S:0,B:0,K:0,BB:0,HBP:0,H:0,R:0,ER:0,BF:0,W:0,L:0,ND:0}});
+ t.players.forEach(p=>{r.bat[p.id]={G:0,PA:0,AB:0,H:0,d2:0,d3:0,HR:0,RBI:0,SB:0,BB:0,HBP:0,K:0,SF:0,SH:0,GO:0,AO:0};r.df[p.id]={G:0,pos:{}};r.pt[p.id]={G:0,outs:0,P:0,S:0,B:0,K:0,BB:0,HBP:0,H:0,R:0,ER:0,BF:0,W:0,L:0,ND:0,GS:0,REL:0,SV:0,HLD:0}});
  S.games.filter(g=>(g.a==tid||g.h==tid)&&inR(g)).forEach(g=>{if(g.lu.a.some(x=>!x.p)||g.lu.h.some(x=>!x.p))return;let s,o;try{s=g.a==tid?'a':'h';o=calc(g)}catch(e){console.error('game skipped in agg',g.id,e);return}
   t.players.forEach(p=>{const id=p.id,b=o.bat[id],inLu=g.lu[s].some(x=>x.p==id);
    if(b||inLu){const a=r.bat[id];a.G++;if(b)for(const k in b)a[k]+=b[k]}
    const fdKeys=Object.keys(o.fd).filter(k=>o.fd[k].pid==id);if(fdKeys.length||inLu||o.gone[s].includes(id)||o.pit[s]==id){const a=r.df[id];a.G++;fdKeys.forEach(k=>{const f=o.fd[k],pe=POSE[POSNAME[f.pk]]||'?';const bkt=a.pos[pe]=a.pos[pe]||{PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0};['PO','A','E','DP','PB','CS','SBA'].forEach(kk=>bkt[kk]+=f[kk])})}
-   const q=o.pt[id];if(q){const a=r.pt[id];a.G++;['outs','P','S','B','K','BB','HBP','H','R','ER','BF'].forEach(k=>a[k]+=q[k]||0);if(g.fin||o.over){if(q.W)a.W++;else if(q.L)a.L++;else a.ND++}}})});
+   const q=o.pt[id];if(q){const a=r.pt[id];a.G++;['outs','P','S','B','K','BB','HBP','H','R','ER','BF','GS','REL','SV','HLD'].forEach(k=>a[k]+=q[k]||0);if(g.fin||o.over){if(q.W)a.W++;else if(q.L)a.L++;else a.ND++}}})});
  return r}
 const togCol=(tab,k)=>{S.cfg=S.cfg||{};S.cfg[tab]=S.cfg[tab]||{};S.cfg[tab][k]=S.cfg[tab][k]===false;R()};
 const sortBy=k=>{if(V.sk==k)V.sd=V.sd=='desc'?'asc':'desc';else{V.sk=k;V.sd='desc'}R()};
