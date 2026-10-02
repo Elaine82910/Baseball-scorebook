@@ -288,20 +288,24 @@ function calc(g){
   else if(e.t=='pc'){const old=o.pit[e.side],sl=o.lu[e.side].indexOf(old);o.pit[e.side]=e.pid;Q(e.pid);o.pitOrder[e.side].push(e.pid);o.gone[e.side].push(old);if(sl>=0&&o.pos[e.side][sl]=='投'){o.lu[e.side][sl]=e.pid;o.hist[e.side][sl].push({pid:e.pid,tag:'',positions:[POSE[o.pos[e.side][sl]]||'']})}note(`更換投手：${pn(old)} ➡︎ ${pn(e.pid)}`)}
   else if(e.t=='dfc'){const side=e.side,chain=e.order;
    const roleInfo=r=>{const idx=o.pos[side].findIndex(p=>POSN[p]==r);return idx<0?{slot:null,pid:r==1?o.pit[side]:null}:{slot:idx,pid:o.lu[side][idx]}};
-   const info2=[{slot:null,pid:e.subPid},...chain.map(roleInfo)];
+   const info2=chain.map(roleInfo);
    const notes=[];
+   // existing on-field players (info2[0..k-2]) move to the NEXT role in the chain but keep their own batting slot
    for(let i=0;i<info2.length-1;i++){
-    const mover=info2[i].pid,nextRole=chain[i],nextInfo=info2[i+1],displaced=nextInfo.pid,lbl=nextRole==1?'投':POSNAME[nextRole];
-    if(nextRole==1&&nextInfo.slot==null){o.pit[side]=mover;if(mover){Q(mover);o.pitOrder[side].push(mover)}}
-    else{
-     o.lu[side][nextInfo.slot]=mover;o.pos[side][nextInfo.slot]=lbl;o.hist[side][nextInfo.slot].push({pid:mover,tag:'DEF',positions:[POSE[lbl]||'']});delete o.pendDef[side][nextInfo.slot];
+    const mover=info2[i].pid,nextRole=chain[i+1],lbl=nextRole==1?'投':POSNAME[nextRole];
+    if(info2[i].slot!=null){
+     o.pos[side][info2[i].slot]=lbl;delete o.pendDef[side][info2[i].slot];
+     const hs=o.hist[side][info2[i].slot];if(hs&&hs.length)hs[hs.length-1].positions.push(POSE[lbl]||'');
      if(nextRole==1){o.pit[side]=mover;if(mover){Q(mover);o.pitOrder[side].push(mover)}}
-     if(i>0&&chain[i-1]==1&&info2[i].slot==null)(o.pendDHCancel=o.pendDHCancel||{a:{},h:{}})[side][nextInfo.slot]=(P(displaced)?P(displaced).name:'');
     }
-    notes.push(`更換守備：${pn(mover)} ➡︎ ${nextRole==1?'投手':FN[nextRole]} ${pn(displaced)}`);
+    notes.push(`更換守備：${pn(mover)} ➡︎ ${nextRole==1?'投手':FN[nextRole]} ${pn(info2[i+1].pid)}`);
    }
-   const leaving=info2[info2.length-1].pid;
+   // last existing player leaves; the incoming sub takes the FIRST role in his vacated slot
+   const last=info2[info2.length-1],leaving=last.pid,firstRole=chain[0],lbl0=firstRole==1?'投':POSNAME[firstRole];
    if(leaving)o.gone[side].push(leaving);
+   if(last.slot!=null){o.lu[side][last.slot]=e.subPid;o.pos[side][last.slot]=lbl0;o.hist[side][last.slot].push({pid:e.subPid,tag:'DEF',positions:[POSE[lbl0]||'']});delete o.pendDef[side][last.slot];if(firstRole==1){o.pit[side]=e.subPid;if(e.subPid){Q(e.subPid);o.pitOrder[side].push(e.subPid)}}}
+   else if(firstRole==1){o.pit[side]=e.subPid;if(e.subPid){Q(e.subPid);o.pitOrder[side].push(e.subPid)}}
+   notes.unshift(`更換守備：${pn(e.subPid)} ➡︎ ${firstRole==1?'投手':FN[firstRole]} ${pn(leaving)}`);
    notes.forEach(t=>note(t));}
   else if(e.t=='df'){const old=o.lu[e.side][e.slot];o.gone[e.side].push(old);o.lu[e.side][e.slot]=e.pid;o.hist[e.side][e.slot].push({pid:e.pid,tag:'DEF',positions:[POSE[o.pos[e.side][e.slot]]||'']});delete o.pendDef[e.side][e.slot];note(`更換守備：${pn(e.pid)} ➡︎ ${FN[POSN[o.pos[e.side][e.slot]]]||''} ${pn(old)}`)}
   else if(e.t=='rot'){const ord=e.order,side=e.side;
@@ -548,7 +552,7 @@ function sortPs(t,A,tab,cols,teamOPS){const ps=t.players.filter(p=>A[tab][p.id].
  if(!c)return ps.sort((p,q)=>(parseFloat(p.no)||0)-(parseFloat(q.no)||0)||String(p.no).localeCompare(String(q.no)));
  const val=p=>{const x=A[tab][p.id];if(c[0]=='IP')return x.outs;const v=c[2](x,p,teamOPS);if(typeof v=='number')return v;if(v=='-')return null;const n=parseFloat(v);return isNaN(n)?v:n},dir=V.sd=='asc'?1:-1;
  return ps.sort((p,q)=>{const a=val(p),b=val(q);if(a===null&&b===null)return 0;if(a===null)return 1;if(b===null)return -1;return(typeof a=='string'||typeof b=='string'?String(a).localeCompare(String(b),'zh'):a-b)*dir})}
-function teamBar(tab){const on=k=>!(S.cfg&&S.cfg[tab]&&S.cfg[tab][k]===false),cols=COLS[tab];return `<div class=row><div style="flex:1;display:flex;gap:6px">${[['bat','打擊'],['df','守備'],['pt','投球']].map(([k,l])=>btn(l,`V.cst='${k}';V.sk=null;R()`,tab==k?'on':'')).join('')}</div>${btn('日期區間',`openDr('${V.tid}')`,(S.dr&&S.dr[V.tid])?'on':'')}${btn('⚙','V.cs=!V.cs;R()',V.cs?'on':'')}<button class=b onclick="V.pdf={kind:'team',tid:'${V.tid}'};V.pdf.fn=pdfDefName();R()">📄</button></div>${(S.dr&&S.dr[V.tid])?`<div class=lg2>統計區間：${(S.dr[V.tid].from||'最早').replace(/-/g,'/')} ～ ${(S.dr[V.tid].to||'最新').replace(/-/g,'/')}</div>`:''}${V.cs?`<div class=c><b>顯示項目</b><div class="cklist ck4">${cols.map(c=>`<label class=ck><input type=checkbox ${on(c[0])?'checked':''} onchange="togCol('${tab}','${c[0]}')"><span>${c[1]}</span></label>`).join('')}</div></div>`:''}`}
+function teamBar(tab){const on=k=>!(S.cfg&&S.cfg[tab]&&S.cfg[tab][k]===false),cols=COLS[tab];return `<div class=row><div style="flex:1;display:flex;gap:6px">${[['bat','打擊'],['df','守備'],['pt','投球']].map(([k,l])=>btn(l,`V.cst='${k}';V.sk=null;R()`,tab==k?'on':'')).join('')}</div>${btn('日期區間',`openDr('${V.tid}')`,(S.dr&&S.dr[V.tid])?'on':'')}${btn('⚙ 設定','V.cs=!V.cs;R()',V.cs?'on':'')}<button class=b onclick="V.pdf={kind:'team',tid:'${V.tid}'};V.pdf.fn=pdfDefName();R()">📄</button></div>${(S.dr&&S.dr[V.tid])?`<div class=lg2>統計區間：${(S.dr[V.tid].from||'最早').replace(/-/g,'/')} ～ ${(S.dr[V.tid].to||'最新').replace(/-/g,'/')}</div>`:''}${V.cs?`<div class=c><b>顯示項目</b><div class="cklist ck4">${cols.map(c=>`<label class=ck><input type=checkbox ${on(c[0])?'checked':''} onchange="togCol('${tab}','${c[0]}')"><span>${c[1]}</span></label>`).join('')}</div></div>`:''}`}
 function teamStatsDF(t,A){const cols=COLS.df,on=k=>!(S.cfg&&S.cfg.df&&S.cfg.df[k]===false),vis=cols.filter(c=>on(c[0]));
  const tot=pid=>{const x={G:A.df[pid].G,PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0};Object.values(A.df[pid].pos).forEach(p=>{x.PO+=p.PO;x.A+=p.A;x.E+=p.E;x.DP+=p.DP;x.PB+=p.PB;x.CS+=p.CS;x.SBA+=p.SBA});return x};
  let players=t.players.filter(p=>A.df[p.id].G>0);
@@ -592,9 +596,11 @@ function boxTable(g,o){const n=Math.max(g.inn||9,o.in);
    const entries=o.box.filter(x=>x.side==s&&x.slot==slot);
    const seen=[];entries.forEach(e=>{if(!seen.includes(e.pid))seen.push(e.pid)});
    const starter=g.lu[s][slot].p;if(starter&&!seen.includes(starter))seen.unshift(starter);
+   const current=o.lu[s][slot];if(current&&!seen.includes(current))seen.push(current);
    seen.forEach((pid,pi)=>{
     const cells=[...Array(n)].map((_,j)=>{const hit=entries.filter(e=>e.pid==pid&&e.in==j+1);return hit.length?hit.map(x=>`<span class=bxr style="${x.runs?'font-weight:700':''}">${x.code}</span>`).join(''):''});
-    rows.push(`<tr><td style="${stk(0,22)}">${pi==0?slot+1:''}</td><td style="${stk(22,60)}">${nm(pid)}</td><td style="${stk(82,34)}">${POSE[o.pos[s][slot]]||''}</td>${cells.map(c=>`<td>${c}</td>`).join('')}</tr>`)
+    const stH=(o.hist[s][slot]||[]).find(h=>h.pid==pid),posTxt=stH&&stH.positions.length?stH.positions.slice().reverse().map((p,i)=>i==0?p:`(${p})`).join('<br>'):(POSE[o.pos[s][slot]]||'');
+    rows.push(`<tr><td style="${stk(0,22)}">${pi==0?slot+1:''}</td><td style="${stk(22,60)}">${nm(pid)}</td><td class=pcell style="${stk(82,34)}">${posTxt}</td>${cells.map(c=>`<td>${c}</td>`).join('')}</tr>`)
    })
   }
   return `<div class=c><h3>${t.name}</h3><div class=sc><table class=boxtb><tr><th style="${stk(0,22)}"></th><th style="${stk(22,60)}">球員</th><th style="${stk(82,34)}">守位</th>${[...Array(n)].map((_,j)=>`<th>${j+1}</th>`).join('')}</tr>${rows.join('')}</table></div></div>`}).join('')}
@@ -652,7 +658,7 @@ function statsBP(g,o,side){const f=(n,d=3)=>isFinite(n)?n.toFixed(d):'-';
    (o.hist[s][slot]||[]).forEach((st,si)=>{
     const b=o.bat[st.pid]||{PA:0,AB:0,H:0,d2:0,d3:0,HR:0,RBI:0,SB:0,BB:0,HBP:0,K:0,SF:0,SH:0};
     const cb=A.bat[st.pid]||b,cobp=(cb.H+cb.BB+cb.HBP)/(cb.AB+cb.BB+cb.HBP+cb.SF),cslg=(cb.H+cb.d2+2*cb.d3+3*cb.HR)/cb.AB;
-    const posLines=[st.tag=='DEF'?`(${st.positions[0]})`:(st.tag?`(${st.tag})`:st.positions[0]),...st.positions.slice(1).map(p=>`(${p})`)].filter(Boolean).join('<br>');
+    const prev=st.positions.slice().reverse(),posLines=[st.tag=='DEF'?`(${prev[0]})`:(st.tag?`(${st.tag})`:prev[0]),...prev.slice(1).map(p=>`(${p})`)].filter(Boolean).join('<br>');
     rows.push(`<tr><td style="${stk(0,22)}">${si==0?slot+1:''}</td><td style="${stk(22,60)}">${nm(st.pid)}</td><td class=pcell style="${stk(82,40)}">${posLines}</td><td>${b.PA}</td><td>${b.AB}</td><td>${b.H}</td><td>${b.H-b.d2-b.d3-b.HR}</td><td>${b.d2}</td><td>${b.d3}</td><td>${b.HR}</td><td>${b.RBI}</td><td>${b.SB}</td><td>${b.BB+b.HBP}</td><td>${b.K}</td><td>${b.SH}</td><td>${b.SF}</td><td>${f(cb.H/cb.AB)}</td><td>${f(cobp+cslg)}</td></tr>`)
    })
   }
