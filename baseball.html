@@ -599,7 +599,7 @@ function boxTable(g,o){const n=Math.max(g.inn||9,o.in);
    const current=o.lu[s][slot];if(current&&!seen.includes(current))seen.push(current);
    seen.forEach((pid,pi)=>{
     const cells=[...Array(n)].map((_,j)=>{const hit=entries.filter(e=>e.pid==pid&&e.in==j+1);return hit.length?hit.map(x=>`<span class=bxr style="${x.runs?'font-weight:700':''}">${x.code}</span>`).join(''):''});
-    const stH=(o.hist[s][slot]||[]).find(h=>h.pid==pid),posTxt=stH&&stH.positions.length?stH.positions.slice().reverse().map((p,i)=>i==0?p:`(${p})`).join('<br>'):(POSE[o.pos[s][slot]]||'');
+    const stH=(o.hist[s][slot]||[]).find(h=>h.pid==pid),posTxt=stH&&stH.positions.length?stH.positions.map((p,i)=>i==0?p:`(${p})`).join('<br>'):(POSE[o.pos[s][slot]]||'');
     rows.push(`<tr><td style="${stk(0,22)}">${pi==0?slot+1:''}</td><td style="${stk(22,60)}">${nm(pid)}</td><td class=pcell style="${stk(82,34)}">${posTxt}</td>${cells.map(c=>`<td>${c}</td>`).join('')}</tr>`)
    })
   }
@@ -658,7 +658,7 @@ function statsBP(g,o,side){const f=(n,d=3)=>isFinite(n)?n.toFixed(d):'-';
    (o.hist[s][slot]||[]).forEach((st,si)=>{
     const b=o.bat[st.pid]||{PA:0,AB:0,H:0,d2:0,d3:0,HR:0,RBI:0,SB:0,BB:0,HBP:0,K:0,SF:0,SH:0};
     const cb=A.bat[st.pid]||b,cobp=(cb.H+cb.BB+cb.HBP)/(cb.AB+cb.BB+cb.HBP+cb.SF),cslg=(cb.H+cb.d2+2*cb.d3+3*cb.HR)/cb.AB;
-    const prev=st.positions.slice().reverse(),posLines=[st.tag=='DEF'?`(${prev[0]})`:(st.tag?`(${st.tag})`:prev[0]),...prev.slice(1).map(p=>`(${p})`)].filter(Boolean).join('<br>');
+    const posLines=[st.tag=='DEF'?`(${st.positions[0]})`:(st.tag?`(${st.tag})`:st.positions[0]),...st.positions.slice(1).map(p=>`(${p})`)].filter(Boolean).join('<br>');
     rows.push(`<tr><td style="${stk(0,22)}">${si==0?slot+1:''}</td><td style="${stk(22,60)}">${nm(st.pid)}</td><td class=pcell style="${stk(82,40)}">${posLines}</td><td>${b.PA}</td><td>${b.AB}</td><td>${b.H}</td><td>${b.H-b.d2-b.d3-b.HR}</td><td>${b.d2}</td><td>${b.d3}</td><td>${b.HR}</td><td>${b.RBI}</td><td>${b.SB}</td><td>${b.BB+b.HBP}</td><td>${b.K}</td><td>${b.SH}</td><td>${b.SF}</td><td>${f(cb.H/cb.AB)}</td><td>${f(cobp+cslg)}</td></tr>`)
    })
   }
