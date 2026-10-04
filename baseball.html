@@ -287,27 +287,26 @@ function calc(g){
   else if(e.t=='bk'){cb=null;const parts=[];for(let x=3;x>0;x--){const r=o.bs[x];if(!r)continue;o.bs[x]=null;if(x==3){rn(r,0);parts.push(`三壘跑者 ${pname(r.id)} 回本壘得分`)}else{o.bs[x+1]=r;parts.push(`${BN[x]}跑者 ${pname(r.id)} 上${BN[x+1]}`)}}cur.push({s:`↳ 投手犯規：${parts.reverse().join('，')}`})}
   else if(e.t=='tb'){if(e.pid){o.bs[e.base]={id:e.pid,p:o.pit[o.top?'h':'a'],u:true};note(`突破僵局制：${bo(e.pid)} 上${BN[e.base]}`)}else{o.bs[e.base]=null;note(`突破僵局制：清除${BN[e.base]}跑者`)}}
   else if(e.t=='pc'){const old=o.pit[e.side],sl=o.lu[e.side].indexOf(old);o.pit[e.side]=e.pid;Q(e.pid);pitEnter(e.side,e.pid);o.pitOrder[e.side].push(e.pid);o.gone[e.side].push(old);if(sl>=0&&o.pos[e.side][sl]=='投'){o.lu[e.side][sl]=e.pid;o.hist[e.side][sl].push({pid:e.pid,tag:'',positions:[POSE[o.pos[e.side][sl]]||'']})}note(`更換投手：${pn(old)} ➡︎ ${pn(e.pid)}`)}
-  else if(e.t=='dfc'){const side=e.side,chain=e.order;
+  else if(e.t=='dfc'){const side=e.side,chain=e.order,subs=e.subPids||(e.subPid?[e.subPid]:[]),K=chain.length,S=subs.length;
    const roleInfo=r=>{const idx=o.pos[side].findIndex(p=>POSN[p]==r);return idx<0?{slot:null,pid:r==1?o.pit[side]:null}:{slot:idx,pid:o.lu[side][idx]}};
    const info2=chain.map(roleInfo);
-   const notes=[];
-   // existing on-field players (info2[0..k-2]) move to the NEXT role in the chain but keep their own batting slot
-   for(let i=0;i<info2.length-1;i++){
-    const mover=info2[i].pid,nextRole=chain[i+1],lbl=nextRole==1?'投':POSNAME[nextRole];
-    if(info2[i].slot!=null){
-     o.pos[side][info2[i].slot]=lbl;delete o.pendDef[side][info2[i].slot];
-     const hs=o.hist[side][info2[i].slot];if(hs&&hs.length)hs[hs.length-1].positions.push(POSE[lbl]||'');
-     if(nextRole==1){o.pit[side]=mover;if(mover){Q(mover);pitEnter(side,mover);o.pitOrder[side].push(mover)}}
-    }
-    notes.push(`更換守備：${pn(mover)} ➡︎ ${nextRole==1?'投手':FN[nextRole]} ${pn(info2[i+1].pid)}`);
+   const setRole=(slot,mover,role)=>{const lbl=role==1?'投':POSNAME[role];if(slot!=null){o.pos[side][slot]=lbl;delete o.pendDef[side][slot];const hs=o.hist[side][slot];if(hs&&hs.length)hs[hs.length-1].positions.push(POSE[lbl]||'')}if(role==1){o.pit[side]=mover;if(mover){Q(mover);pitEnter(side,mover);o.pitOrder[side].push(mover)}}};
+   const shiftNotes=[],subNotes=[];
+   // existing on-field players shift forward by S roles, keeping their own batting slot
+   for(let i=0;i<K-S;i++){
+    const mover=info2[i].pid,moverSlot=info2[i].slot,curRole=chain[i],nextRole=chain[i+S];
+    setRole(moverSlot,mover,nextRole);
+    shiftNotes.push(`更換守備：${curRole==1?'投手':FN[curRole]} ${pn(mover)} ➡︎ ${nextRole==1?'投手':FN[nextRole]} ${pn(info2[i+S].pid)}`);
    }
-   // last existing player leaves; the incoming sub takes the FIRST role in his vacated slot
-   const last=info2[info2.length-1],leaving=last.pid,firstRole=chain[0],lbl0=firstRole==1?'投':POSNAME[firstRole];
-   if(leaving)o.gone[side].push(leaving);
-   if(last.slot!=null){o.lu[side][last.slot]=e.subPid;o.pos[side][last.slot]=lbl0;o.hist[side][last.slot].push({pid:e.subPid,tag:'DEF',positions:[POSE[lbl0]||'']});delete o.pendDef[side][last.slot];if(firstRole==1){o.pit[side]=e.subPid;if(e.subPid){Q(e.subPid);pitEnter(side,e.subPid);o.pitOrder[side].push(e.subPid)}}}
-   else if(firstRole==1){o.pit[side]=e.subPid;if(e.subPid){Q(e.subPid);pitEnter(side,e.subPid);o.pitOrder[side].push(e.subPid)}}
-   notes.unshift(`更換守備：${pn(e.subPid)} ➡︎ ${firstRole==1?'投手':FN[firstRole]} ${pn(leaving)}`);
-   notes.forEach(t=>note(t));}
+   // the occupants of the LAST S roles leave; each incoming sub takes over one of the FIRST S roles in that vacated slot
+   for(let j=0;j<S;j++){
+    const leaveInfo=info2[K-S+j],leaving=leaveInfo.pid,role=chain[j],sub=subs[j];
+    if(leaving)o.gone[side].push(leaving);
+    if(leaveInfo.slot!=null){o.lu[side][leaveInfo.slot]=sub;o.hist[side][leaveInfo.slot].push({pid:sub,tag:'DEF',positions:[]});setRole(leaveInfo.slot,sub,role)}
+    else setRole(null,sub,role);
+    subNotes.push(`更換守備：${pn(sub)} ➡︎ ${role==1?'投手':FN[role]}`);
+   }
+   subNotes.concat(shiftNotes).forEach(t=>note(t));}
   else if(e.t=='df'){const old=o.lu[e.side][e.slot];o.gone[e.side].push(old);o.lu[e.side][e.slot]=e.pid;o.hist[e.side][e.slot].push({pid:e.pid,tag:'DEF',positions:[POSE[o.pos[e.side][e.slot]]||'']});delete o.pendDef[e.side][e.slot];note(`更換守備：${pn(e.pid)} ➡︎ ${FN[POSN[o.pos[e.side][e.slot]]]||''} ${pn(old)}`)}
   else if(e.t=='rot'){const ord=e.order,side=e.side;
    if(ord.includes('DH')){
@@ -430,17 +429,17 @@ const defRv=(res,bs)=>{const r={},n={'1B':1,IH:1,BH:1,'2B':2,'3B':3,HR:4,E:1}[re
 const t3=()=>{const g=G(),a=calc(g),b=calc({...g,ev:[...g.ev,{t:'p',k:'X'},{t:'pa',res:V.pend,fp:V.seq.slice(),rbi:0,rv:V.rv||undefined}]});return a.in!=b.in||a.top!=b.top};
 const toggleRot=k=>{V.rot=V.rot||[];V.rot=V.rot.includes(k)?V.rot.filter(x=>x!=k):[...V.rot,k];R()};
 const confirmRot=()=>{const g=G(),o=calc(g),d=o.top?'h':'a',ord=V.rot||[];V.rot=[];V.mod=null;if(ord.length>=2)push({t:'rot',side:d,order:ord})};
-const toggleSub=id=>{V.subPid=V.subPid==id?null:id;R()};
-const confirmDef=()=>{if(V.subPid&&V.rot.length>=2){const pid=V.subPid,order=V.rot.slice(),g=G(),o=calc(g),d=o.top?'h':'a';V.rot=[];V.subPid=null;V.mod=null;push({t:'dfc',side:d,order,subPid:pid});return}if(V.rot.length>=2){confirmRot();return}if(V.rot.length==1&&V.subPid){const k=V.rot[0],pid=V.subPid;V.rot=[];V.subPid=null;V.mod=null;doDf(k,pid)}};
+const toggleSub=id=>{V.subPids=V.subPids||[];const i=V.subPids.indexOf(id);if(i<0)V.subPids.push(id);else V.subPids.splice(i,1);R()};
+const confirmDef=()=>{const subs=V.subPids||[];if(subs.length>=1&&V.rot.length>=subs.length&&(subs.length>1||V.rot.length>=2)){const pids=subs.slice(),order=V.rot.slice(),g=G(),o=calc(g),d=o.top?'h':'a';V.rot=[];V.subPids=[];V.mod=null;push({t:'dfc',side:d,order,subPids:pids});return}if(V.rot.length>=2){confirmRot();return}if(V.rot.length==1&&subs.length==1){const k=V.rot[0],pid=subs[0];V.rot=[];V.subPids=[];V.mod=null;doDf(k,pid)}};
 const doDf=(k,pid)=>{const g=G(),o=calc(g),d=o.top?'h':'a';V.mod=null;if(k==1)push({t:'pc',side:d,pid});else push({t:'df',side:d,slot:o.pos[d].findIndex(p=>POSN[p]==k),pid})};
 const doPr=(x,pid)=>{V.mod=null;push({t:'pr',base:x,pid})};
 function smodal(){const g=G(),o=calc(g),bt=o.top?'a':'h',d=o.top?'h':'a',run=V.mod=='run',sd=run?bt:d,av=avail(g,o,sd),cp=k=>{if(k==1)return o.pit[d];const i=o.pos[d].findIndex(p=>POSN[p]==k);return i<0?null:o.lu[d][i]};
  V.rot=V.rot||[];
  const cands=(run&&V.mk)?`<div class=c><b>${BN[V.mk]}跑者 ${pn(o.bs[V.mk].id)}　換成：</b><div class=row>${av.map(id=>btn(pn(id),`doPr(${V.mk},'${id}')`)).join('')||'沒有可換的候補選手'}</div></div>`:'';
  const top=run?([3,2,1].filter(x=>o.bs[x]).map(x=>btn(`${BN[x]} ${pn(o.bs[x].id)}`,`V.mk=${x};R()`,V.mk==x?'pri':'')).join('')||'壘上沒有跑者'):(()=>{const dhIdx=o.pos[d].findIndex(p=>p=='指定'),dhId=dhIdx>=0?o.lu[d][dhIdx]:null;return `<div class=fd><svg viewBox="0 0 100 100" preserveAspectRatio="none"><rect width=100 height=100 fill="#2d7a3e"/><path d="M50 92L0 42M50 92L100 42" stroke="#fff" stroke-width=.6 /><path d="M50 90L80 62L50 34L20 62Z" fill="#c9a26b"/></svg>${Object.keys(FP).map(k=>{const id=cp(+k),ri=V.rot.indexOf(+k);return `<button class="fb ${ri>=0?'on':''}" style="left:${FP[k][0]}%;top:${FP[k][1]}%" onclick="toggleRot(${k})">${NUMENG[k]}${ri>=0?`(${ri+1})`:''}<br><small>${id?P(id).name:'－'}</small></button>`}).join('')}${dhId?`<button class="fb dhbox ${V.rot.includes('DH')?'on':''}" style="left:8%;top:92%" onclick="toggleRot('DH')"><b>DH${V.rot.includes('DH')?`(${V.rot.indexOf('DH')+1})`:''}</b><small>${P(dhId)?P(dhId).name:'－'}</small></button>`:''}</div>`})();
- const canConfirm=V.rot.length>=2||(V.rot.length==1&&V.subPid);
- const defBar=!run?`<div class=row>${btn('確認',"confirmDef()",canConfirm?'pri':'')}${btn('重選',"V.rot=[];V.subPid=null;R()")}</div><b>候補名單</b><div class=row>${av.map(id=>btn(pn(id),`toggleSub('${id}')`,V.subPid==id?'pri':'')).join('')||'沒有可換的候補選手'}</div>`:'';
- return `<div class=mo><div class=md><b>${run?'更換跑壘者（進攻方：':'更換守備（守備方：'}${T(g[sd]).name}）</b>${run?`<div class=row>${top}</div>`:top}${defBar}${cands}<div class=row>${btn('關閉',"V.mod=null;V.rot=[];V.subPid=null;R()")}</div></div></div>`}
+ const canConfirm=V.rot.length>=2||(V.rot.length>=1&&(V.subPids||[]).length>=1&&V.rot.length>=(V.subPids||[]).length);
+ const defBar=!run?`<div class=row>${btn('確認',"confirmDef()",canConfirm?'pri':'')}${btn('重選',"V.rot=[];V.subPids=[];R()")}</div><b>候補名單</b><div class=row>${av.map(id=>btn(pn(id),`toggleSub('${id}')`,(V.subPids||[]).includes(id)?'pri':'')).join('')||'沒有可換的候補選手'}</div>`:'';
+ return `<div class=mo><div class=md><b>${run?'更換跑壘者（進攻方：':'更換守備（守備方：'}${T(g[sd]).name}）</b>${run?`<div class=row>${top}</div>`:top}${defBar}${cands}<div class=row>${btn('關閉',"V.mod=null;V.rot=[];V.subPids=[];R()")}</div></div></div>`}
 const NEEDBT=['1B','2B','3B','IH','BH','E','TP'];
 function modal(){const sq=V.pend=='DK'?'':(V.seq.length?`<div class=sq>${V.seq.join('-')}</div>`:'');
  if(V.st==4){const o=calc(G()),cand=[['b','打者'],...[1,2,3].filter(x=>o.bs[x]).map(x=>[x,`${BN[x]}跑者 ${pn(o.bs[x].id)}`])],od=V.rv.order;
@@ -641,7 +640,7 @@ function rec(g,o){const bt=o.top?'a':'h',df=o.top?'h':'a',bi=o.bi[bt]%9;
  <div class="g g3">${btn('界外',"pitch('F')")}${btn('觸身',"pitch('H')")}<button class=b ${(o.s<2||(o.bs[1]&&o.outs<2))?'disabled':''} onclick="playDK()">不死</button><button class=b ${o.s==2?'':'disabled'} onclick="pitch('Q')">觸擊失敗</button>${hr?`${btn('暴投',"wpStart('WP')")}${btn('捕逸',"wpStart('PB')")}${btn('犯規',"push({t:'bk'})")}${[1,2,3].filter(x=>o.bs[x]).length==2?btn('雙盜壘',"dsStart()"):''}`:''}</div>
  <b>擊球結果</b>
  <div class="g g3">${[['IH','bhit'],['GO','bout'],['DP','bout'],['1B','bhit'],['LO','bout'],['TP','bout'],['2B','bhit'],['FO','bout'],['SH','bsac'],['3B','bhit'],['FF','bout'],['SF','bsac'],['HR','bhit'],['FC','bout'],['E','berr']].map(([k,cls])=>`<button class="b ${cls}" ${((k=='DP')&&o.outs>=2)||((k=='FC'||k=='DP')&&!hr)||(k=='TP'&&(o.outs>0||[1,2,3].filter(x=>o.bs[x]).length<2))||(k=='SF'&&!(o.outs<2&&o.bs[3]))||(k=='SH'&&!hr)?'disabled':''} onclick="play('${k}')">${RLB[k]}</button>`).join('')}</div>
- <div class=c><div class=row>${btn('更換守備',"V.mod='def';V.mk=0;V.rot=[];V.subPid=null;R()")}${btn('更換跑壘者',"V.mod='run';V.mk=0;R()")}</div><div class=row>更換代打 <select id=sh>${sl(bt)}</select>${btn('確定',"sub('h')")}</div></div></div>
+ <div class=c><div class=row>${btn('更換守備',"V.mod='def';V.mk=0;V.rot=[];V.subPids=[];R()")}${btn('更換跑壘者',"V.mod='run';V.mk=0;R()")}</div><div class=row>更換代打 <select id=sh>${sl(bt)}</select>${btn('確定',"sub('h')")}</div></div></div>
  <div class=row>${btn('↩ 復原上一步','undo()')}</div><h3 style="display:flex;align-items:center;position:relative"><span>逐打席紀錄</span><button class="b hbtn" style="position:static;margin-left:auto;font-size:16px" onclick="showHint('長按該打席可手動修改紀錄內容')">⚾</button>${V.hint?`<div class=toast style="right:0;top:34px">${V.hint}</div>`:''}</h3>${logHtml(g,o)}`}
 function logHtml(g,o){let last='';return o.log.map((l,i)=>[l,i]).reverse().map(([l,i])=>{const k=`${l.in}局${l.top?'上':'下'}`,h=k!=last?`<div class=ih>${k}</div>`:'',key=g.id+':'+i;last=k;
  const ov=g.txtOvr&&g.txtOvr[i],sum=l.sum,items=ov?ov.items.map(s=>({s})):l.items;
@@ -652,15 +651,17 @@ function statsDF(g,o){return ['a','h'].map(s=>{const t=T(g[s]),A=agg(g[s],null,g
  const rows=[];
  for(let slot=0;slot<9;slot++){
   (o.hist[s][slot]||[]).forEach((st,si)=>{
-   const key=g.id+':df:'+slot+':'+si,open=!!V.op[key];
-   const mk=posEng=>{const pk=ENGNUM[posEng],f=o.fd[st.pid+'_'+pk]||{PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0},tc=f.PO+f.A+f.E,cf=(A.df[st.pid]&&A.df[st.pid].pos[posEng])||f,ctc=cf.PO+cf.A+cf.E;return{posEng,f,tc,cf,ctc}};
-   const all=st.positions.length?st.positions.map(mk):[{...mk(undefined),posEng:'-'}];
-   const shown=(open||all.length<=1)?all:all.slice(0,1);
-   shown.forEach((r,i)=>{const last=i==shown.length-1,tog=(last&&all.length>1)?`<span class=tog onclick="V.op['${key}']=!V.op['${key}'];R()">${open?'∧':'∨'}</span>`:'';
-    rows.push(`<tr><td style="${stk(0,22)}">${si==0&&i==0?slot+1:''}</td><td style="${stk(22,60)}">${i==0?nm(st.pid):''}</td><td style="${stk(82,30)}">${r.posEng}</td><td style="${stk(112,20)}">${tog}</td><td>${r.ctc?((r.cf.PO+r.cf.A)/r.ctc).toFixed(3):'-'}</td><td>${r.tc}</td><td>${r.f.E}</td><td>${r.f.PO}</td><td>${r.f.A}</td><td>${r.f.DP}</td><td>${r.f.PB}</td><td>${r.f.CS}</td><td>${r.f.SBA}</td></tr>`)})
+   const mk=posEng=>{const pk=ENGNUM[posEng],f=o.fd[st.pid+'_'+pk]||{PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0},cf=(A.df[st.pid]&&A.df[st.pid].pos[posEng])||f;return{f,cf}};
+   const ps=st.positions.length?st.positions:['-'];
+   const agg2={PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0},caggp={PO:0,A:0,E:0};
+   ps.forEach(pe=>{const{f,cf}=mk(pe=='-'?undefined:pe);['PO','A','E','DP','PB','CS','SBA'].forEach(k=>agg2[k]+=f[k]||0);['PO','A'].forEach(k=>caggp[k]+=cf[k]||0)});
+   const ctc=ps.reduce((sum,pe)=>{const{cf}=mk(pe=='-'?undefined:pe);return sum+(cf.PO||0)+(cf.A||0)+(cf.E||0)}, 0);
+   const tc=agg2.PO+agg2.A+agg2.E;
+   const posLines=[st.tag=='DEF'?`(${ps[0]})`:(st.tag?`(${st.tag})`:ps[0]),...ps.slice(1).map(p=>`(${p})`)].filter(Boolean).join('<br>');
+   rows.push(`<tr><td style="${stk(0,22)}">${si==0?slot+1:''}</td><td style="${stk(22,60)}">${nm(st.pid)}</td><td class=pcell style="${stk(82,30)}">${posLines}</td><td>${ctc?((caggp.PO+caggp.A)/ctc).toFixed(3):'-'}</td><td>${tc}</td><td>${agg2.E}</td><td>${agg2.PO}</td><td>${agg2.A}</td><td>${agg2.DP}</td><td>${agg2.PB}</td><td>${agg2.CS}</td><td>${agg2.SBA}</td></tr>`)
   })
  }
- return `<div class=c><h3>${t.name} 守備</h3><div class=sc><table><tr><th style="${stk(0,22)}"></th><th style="${stk(22,60)}">球員</th><th style="${stk(82,30)}">守位</th><th style="${stk(112,20)}"></th><th>守備率</th><th>守備機會</th><th>失誤</th><th>刺殺</th><th>助殺</th><th>雙殺</th><th>捕逸</th><th>阻殺</th><th>被盜成功</th></tr>${rows.join('')}</table></div></div>`}).join('')}
+ return `<div class=c><h3>${t.name} 守備</h3><div class=sc><table><tr><th style="${stk(0,22)}"></th><th style="${stk(22,60)}">球員</th><th style="${stk(82,30)}">守位</th><th>守備率</th><th>守備機會</th><th>失誤</th><th>刺殺</th><th>助殺</th><th>雙殺</th><th>捕逸</th><th>阻殺</th><th>被盜成功</th></tr>${rows.join('')}</table></div></div>`}).join('')}
 function statsBP(g,o,side){const f=(n,d=3)=>isFinite(n)?n.toFixed(d):'-';
  return (side?[side]:['a','h']).map(s=>{const t=T(g[s]),A=agg(g[s],null,g);
   const rows=[];
