@@ -608,7 +608,7 @@ function boxTable(g,o){const n=Math.max(g.inn||9,o.in);
    const current=o.lu[s][slot];if(current&&!seen.includes(current))seen.push(current);
    seen.forEach((pid,pi)=>{
     const cells=[...Array(n)].map((_,j)=>{const hit=entries.filter(e=>e.pid==pid&&e.in==j+1);return hit.length?hit.map(x=>`<span class=bxr style="${x.runs?'font-weight:700':''}">${x.code}</span>`).join(''):''});
-    const stH=(o.hist[s][slot]||[]).find(h=>h.pid==pid),posTxt=stH&&stH.positions.length?stH.positions.map((p,i)=>i==0?p:`(${p})`).join('<br>'):(POSE[o.pos[s][slot]]||'');
+    const stH=(o.hist[s][slot]||[]).find(h=>h.pid==pid),posTxt=stH&&stH.positions.length?[stH.tag=='DEF'?`(${stH.positions[0]})`:(stH.tag?`(${stH.tag})`:stH.positions[0]),...stH.positions.slice(1).map(p=>`(${p})`)].filter(Boolean).join('<br>'):(POSE[o.pos[s][slot]]||'');
     rows.push(`<tr><td style="${stk(0,22)}">${pi==0?slot+1:''}</td><td style="${stk(22,60)}">${nm(pid)}</td><td class=pcell style="${stk(82,34)}">${posTxt}</td>${cells.map(c=>`<td>${c}</td>`).join('')}</tr>`)
    })
   }
