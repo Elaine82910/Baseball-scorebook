@@ -128,15 +128,15 @@ function calc(g){
  const pitEnter=(sd,pid)=>{if(!pid)return;o.pitEntry=o.pitEntry||{a:{},h:{}};if(o.pitEntry[sd][pid])return;o.pitEntry[sd][pid]={lead:tot(o,sd)-tot(o,sd=='a'?'h':'a'),runners:[1,2,3].filter(x=>o.bs[x]).length}};
  o.hist={a:[],h:[]};o.pitOrder={a:[],h:[]};o.box=[];o.pendDef={a:{},h:{}};o.pendDHCancel={a:{},h:{}};o.collideN=0;o.lastPA=null;
  ['a','h'].forEach(s=>{o.pit[s]=(g.sp&&g.sp[s])||(g.lu[s].find(x=>x.pos=='投')||g.lu[s][0]).p;Q(o.pit[s]);pitEnter(s,o.pit[s]);o.pitOrder[s].push(o.pit[s]);o.hist[s]=g.lu[s].map((x,i)=>[{pid:x.p,tag:'',positions:[POSE[o.pos[s][i]]||'']}])});
- let cur=[],cb=null,man=false,oc=0,mk=null,noAuto=false,rc=0,paRc0=0,fdirTxt='',bnameTxt='';
+ let cur=[],cb=null,man=false,oc=0,mk=null,noAuto=false,rc=0,paRc0=0,fdirTxt='',bnameTxt='',taint=false;
  const pname=id=>{const p=P(id);return p?p.name:''};
  const bT=t=>bnameTxt?`打者 ${bnameTxt} ${t}`:`打者${t}`;
  const FDN={LF:'左外野方向',RF:'右外野方向','1B':'一壘方向','3B':'三壘方向','本':'本壘後方'};
  const bo=id=>{const s=o.lu.a.includes(id)?'a':'h',i=o.lu[s].indexOf(id),p=P(id),pos=i>=0?(POSE[o.pos[s][i]]||''):'';return `<b class=bo><span class=or>${i>=0?i+1:''}</span><span class=pc>${pos}</span><span>${p?p.name:'-'}</span></b>`};
- const out=()=>{o.outs++;oc++;o.lo=o.outs;Q(o.pit[o.top?'h':'a']).outs++;if(o.outs<3)return 0;o.outs=0;o.b=0;o.s=0;o.bs.fill(null);const justBatted=o.top?'a':'h';if(o.top){o.top=false;if(o.in>=N&&tot(o,'h')>tot(o,'a')){o.over=1;o.skip=1}}else if(o.in>=N&&tot(o,'h')!=tot(o,'a'))o.over=1;else{o.top=true;o.in++}o.fresh=true;
+ const out=()=>{o.outs++;oc++;o.lo=o.outs;Q(o.pit[o.top?'h':'a']).outs++;if(o.outs<3)return 0;taint=false;o.outs=0;o.b=0;o.s=0;o.bs.fill(null);const justBatted=o.top?'a':'h';if(o.top){o.top=false;if(o.in>=N&&tot(o,'h')>tot(o,'a')){o.over=1;o.skip=1}}else if(o.in>=N&&tot(o,'h')!=tot(o,'a'))o.over=1;else{o.top=true;o.in++}o.fresh=true;
  if(!o.over)Object.keys(o.pendDef[justBatted]).forEach(slot=>{const pid=o.lu[justBatted][slot],pk=POSN[o.pos[justBatted][slot]];if(!pk){delete o.pendDef[justBatted][slot];return}(o.deferredDef=o.deferredDef||[]).push(`更換守備：${pn(pid)} ➡︎ ${FN[pk]||''}`);if(pk==1&&o.pit[justBatted]!=pid){o.pit[justBatted]=pid;Q(pid);o.pitOrder[justBatted].push(pid)}const hs=o.hist[justBatted][slot],lastSt=hs[hs.length-1];if(lastSt)lastSt.positions.push(POSE[o.pos[justBatted][slot]]||'');delete o.pendDef[justBatted][slot]});
  return 1};
- const rn=(r,k)=>{const s=o.top?'a':'h';o.sc[s][o.in-1]=(o.sc[s][o.in-1]||0)+1;rc++;const q=Q(r.p);q.R++;if(!r.u)q.ER++;if(k&&cb&&!man)cb.RBI++;o.lead.push({d:tot(o,'a')-tot(o,'h'),a:o.pit.a,h:o.pit.h})};
+ const rn=(r,k)=>{const s=o.top?'a':'h';o.sc[s][o.in-1]=(o.sc[s][o.in-1]||0)+1;rc++;const q=Q(r.p);q.R++;if(!r.u&&!taint)q.ER++;if(k&&cb&&!man)cb.RBI++;o.lead.push({d:tot(o,'a')-tot(o,'h'),a:o.pit.a,h:o.pit.h})};
  const mv=(n,k)=>{for(let x=3;x>0;x--)if(o.bs[x]){const y=x+n;if(y>3)rn(o.bs[x],k);else o.bs[y]=o.bs[x];o.bs[x]=null}};
  const N=g.inn||9;
  const fid=(d,k)=>k==1?o.pit[d]:o.lu[d][o.pos[d].findIndex(p=>POSN[p]==k)],F=(id,pk)=>{const key=id+'_'+pk;return o.fd[key]||(o.fd[key]={pid:id,pk,PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0})};
@@ -166,7 +166,7 @@ function calc(g){
    if(res=='TP')rp.push(`出局順序：${rv.order.map(k=>k=='b'?`打者 ${bnameTxt}`:`${BN[k]}跑者 ${rname[k]||''}`).join('→')}`);
    const hb={'1B':1,IH:1,BH:1,'2B':2,'3B':3,HR:4}[res];
    if(hb){b.H++;o.H[s]++;q.H++;if(hb==2)b.d2++;if(hb==3)b.d3++;if(hb==4){b.HR++;q.HR=(q.HR||0)+1}}
-   if(res=='E')o.E[d]++;if(res=='K'||res=='DK'){b.K++;q.K++}if(res=='SF')b.SF++;
+   if(res=='E'){o.E[d]++;if(o.outs==2)taint=true}if(res=='K'||res=='DK'){b.K++;q.K++}if(res=='SF')b.SF++;
    sc.forEach(r=>rn(r,res=='E'?0:1));if(hb==4)rn(nb,1);
    for(let x=1;x<4;x++)bs[x]=mo[x];
    const bput=x=>{if(bs[x])o.collideN++;bs[x]=nb};if(hb&&hb<4&&!rv.bk)bput(hb);else if(res=='E'){const bd=rv.b||1;if(bd>3)rn(nb,0);else bput(bd)}else if(res=='FC')bput(1);else if(res=='DK')bput(1);else if(res=='SH'){if(rv.bb!='x')bput(1)}
