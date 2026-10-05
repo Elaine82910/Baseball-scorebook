@@ -659,14 +659,14 @@ function statsDF(g,o){return ['a','h'].map(s=>{const t=T(g[s]),A=agg(g[s],null,g
  const rows=[];
  for(let slot=0;slot<9;slot++){
   (o.hist[s][slot]||[]).forEach((st,si)=>{
-   const mk=posEng=>{const pk=ENGNUM[posEng],f=o.fd[st.pid+'_'+pk]||{PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0},cf=(A.df[st.pid]&&A.df[st.pid].pos[posEng])||f;return{f,cf}};
+   const mk=posEng=>{const pk=ENGNUM[posEng];return o.fd[st.pid+'_'+pk]||{PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0}};
    const ps=st.positions.length?st.positions:['-'];
-   const agg2={PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0},caggp={PO:0,A:0,E:0};
-   ps.forEach(pe=>{const{f,cf}=mk(pe=='-'?undefined:pe);['PO','A','E','DP','PB','CS','SBA'].forEach(k=>agg2[k]+=f[k]||0);['PO','A'].forEach(k=>caggp[k]+=cf[k]||0)});
-   const ctc=ps.reduce((sum,pe)=>{const{cf}=mk(pe=='-'?undefined:pe);return sum+(cf.PO||0)+(cf.A||0)+(cf.E||0)}, 0);
+   const agg2={PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0};
+   ps.forEach(pe=>{const f=mk(pe=='-'?undefined:pe);['PO','A','E','DP','PB','CS','SBA'].forEach(k=>agg2[k]+=f[k]||0)});
    const tc=agg2.PO+agg2.A+agg2.E;
+   const allPos=(A.df[st.pid]&&A.df[st.pid].pos)||{},capo=Object.values(allPos).reduce((x,y)=>x+(y.PO||0),0),caas=Object.values(allPos).reduce((x,y)=>x+(y.A||0),0),cae=Object.values(allPos).reduce((x,y)=>x+(y.E||0),0),ctcAll=capo+caas+cae;
    const posLines=[st.tag=='DEF'?`(${ps[0]})`:(st.tag?`(${st.tag})`:ps[0]),...ps.slice(1).map(p=>`(${p})`)].filter(Boolean).join('<br>');
-   rows.push(`<tr><td style="${stk(0,22)}">${si==0?slot+1:''}</td><td style="${stk(22,60)}">${nm(st.pid)}</td><td class=pcell style="${stk(82,30)}">${posLines}</td><td>${ctc?((caggp.PO+caggp.A)/ctc).toFixed(3):'-'}</td><td>${tc}</td><td>${agg2.E}</td><td>${agg2.PO}</td><td>${agg2.A}</td><td>${agg2.DP}</td><td>${agg2.PB}</td><td>${agg2.CS}</td><td>${agg2.SBA}</td></tr>`)
+   rows.push(`<tr><td style="${stk(0,22)}">${si==0?slot+1:''}</td><td style="${stk(22,60)}">${nm(st.pid)}</td><td class=pcell style="${stk(82,30)}">${posLines}</td><td>${ctcAll?((capo+caas)/ctcAll).toFixed(3):'-'}</td><td>${tc}</td><td>${agg2.E}</td><td>${agg2.PO}</td><td>${agg2.A}</td><td>${agg2.DP}</td><td>${agg2.PB}</td><td>${agg2.CS}</td><td>${agg2.SBA}</td></tr>`)
   })
  }
  return `<div class=c><h3>${t.name} 守備</h3><div class=sc><table><tr><th style="${stk(0,22)}"></th><th style="${stk(22,60)}">球員</th><th style="${stk(82,30)}">守位</th><th>守備率</th><th>守備機會</th><th>失誤</th><th>刺殺</th><th>助殺</th><th>雙殺</th><th>捕逸</th><th>阻殺</th><th>被盜成功</th></tr>${rows.join('')}</table></div></div>`}).join('')}
