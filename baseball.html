@@ -137,7 +137,7 @@ function calc(g){
  if(!o.over)Object.keys(o.pendDef[justBatted]).forEach(slot=>{const pid=o.lu[justBatted][slot],pk=POSN[o.pos[justBatted][slot]];if(!pk){delete o.pendDef[justBatted][slot];return}(o.deferredDef=o.deferredDef||[]).push(`更換守備：${pn(pid)} ➡︎ ${FN[pk]||''}`);if(pk==1&&o.pit[justBatted]!=pid){o.pit[justBatted]=pid;Q(pid);o.pitOrder[justBatted].push(pid)}const hs=o.hist[justBatted][slot],lastSt=hs[hs.length-1];if(lastSt)lastSt.positions.push(POSE[o.pos[justBatted][slot]]||'');delete o.pendDef[justBatted][slot]});
  return 1};
  const rn=(r,k)=>{const s=o.top?'a':'h';o.sc[s][o.in-1]=(o.sc[s][o.in-1]||0)+1;rc++;const q=Q(r.p);q.R++;if(!r.u&&!taint)q.ER++;if(k&&cb&&!man)cb.RBI++;o.lead.push({d:tot(o,'a')-tot(o,'h'),a:o.pit.a,h:o.pit.h})};
- const fixPastRuns=n=>{if(!n||cur.length)return;const le=o.log.find(l=>l.items===o.lastPA);if(le)le.runs=(le.runs||0)+n;paRc0=rc};
+ const fixPastRuns=n=>{if(!n||cur.length)return;const le=o.log.find(l=>l.items===o.lastPA);if(le)le.runs=(le.runs||0)+n;if(o.box&&o.box.length){const be=o.box[o.box.length-1];be.runs=(be.runs||0)+n}paRc0=rc};
  const mv=(n,k)=>{for(let x=3;x>0;x--)if(o.bs[x]){const y=x+n;if(y>3)rn(o.bs[x],k);else o.bs[y]=o.bs[x];o.bs[x]=null}};
  const N=g.inn||9;
  const fid=(d,k)=>k==1?o.pit[d]:o.lu[d][o.pos[d].findIndex(p=>POSN[p]==k)],F=(id,pk)=>{const key=id+'_'+pk;return o.fd[key]||(o.fd[key]={pid:id,pk,PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0})};
