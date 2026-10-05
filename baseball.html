@@ -247,8 +247,8 @@ function calc(g){
    const s0=o.top?'a':'h',d0=o.top?'h':'a',bid=o.lu[s0][o.bi[s0]%9],inn=o.in,tp=o.top,pi=o.pit[d0],sc=[],ou=[],mo=[],parts=[];
    for(let x=1;x<4;x++){const r=r0[x],c=r?o.bs.indexOf(r):-1;if(c<1)continue;const dd=e.rv[x]??x;
     if(dd=='x'){ou.push(r);o.bs[c]=null;parts.push(`${BN[x]}跑者 ${pname(r.id)} 出局`)}
-    else if(dd>=4){sc.push(r);o.bs[c]=null;parts.push(`${BN[x]}跑者 ${pname(r.id)} 回本壘得分`)}
-    else if(dd>c){mo.push([dd,r]);o.bs[c]=null;parts.push(`${BN[x]}跑者 ${pname(r.id)} 上${BN[dd]}`)}}
+    else if(dd>=4){r.u=true;sc.push(r);o.bs[c]=null;parts.push(`${BN[x]}跑者 ${pname(r.id)} 回本壘得分`)}
+    else if(dd>c){r.u=true;mo.push([dd,r]);o.bs[c]=null;parts.push(`${BN[x]}跑者 ${pname(r.id)} 上${BN[dd]}`)}}
    mo.forEach(([dd,r])=>{if(o.bs[dd])o.collideN++;o.bs[dd]=r});sc.forEach(r=>rn(r,0));
    o.E[d0]++;{const key=pi+'_1',f=o.fd[key]||(o.fd[key]={pid:pi,pk:1,PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0});f.E++}
    {const t=`投手 ${pname(pi)} 牽制失誤${parts.length?'，'+parts.join('，'):''}`;if(cur.length)note(t);else if(o.lastPA)o.lastPA.push({s:t});else note(t)}
@@ -257,7 +257,7 @@ function calc(g){
   else if(e.t=='hep'){cb=null;
    const d0=o.top?'h':'a';
    const parts=[],mo2=[],sc2=[];
-   for(let x=3;x>0;x--)if(o.bs[x]&&e.rv&&e.rv[x]!=null&&e.rv[x]!=x){const r=o.bs[x],dd=e.rv[x];o.bs[x]=null;
+   for(let x=3;x>0;x--)if(o.bs[x]&&e.rv&&e.rv[x]!=null&&e.rv[x]!=x){const r=o.bs[x],dd=e.rv[x];o.bs[x]=null;r.u=true;
     if(dd>=4){sc2.push(r);parts.push(`${BN[x]}跑者 ${pname(r.id)} 回本壘得分`)}else{mo2.push([dd,r]);parts.push(`${BN[x]}跑者 ${pname(r.id)} 上${BN[dd]}`)}}
    mo2.forEach(([dd,r])=>{if(o.bs[dd])o.collideN++;o.bs[dd]=r});sc2.forEach(r=>rn(r,0));
    o.E[d0]++;{const idx=o.pos[d0].findIndex(p=>POSN[p]==e.ef),epid=e.ef==1?o.pit[d0]:(idx<0?null:o.lu[d0][idx]);if(epid){const key=epid+'_'+e.ef,f=o.fd[key]||(o.fd[key]={pid:epid,pk:e.ef,PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0});f.E++}}
