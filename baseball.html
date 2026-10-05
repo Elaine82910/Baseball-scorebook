@@ -137,6 +137,7 @@ function calc(g){
  if(!o.over)Object.keys(o.pendDef[justBatted]).forEach(slot=>{const pid=o.lu[justBatted][slot],pk=POSN[o.pos[justBatted][slot]];if(!pk){delete o.pendDef[justBatted][slot];return}(o.deferredDef=o.deferredDef||[]).push(`更換守備：${pn(pid)} ➡︎ ${FN[pk]||''}`);if(pk==1&&o.pit[justBatted]!=pid){o.pit[justBatted]=pid;Q(pid);o.pitOrder[justBatted].push(pid)}const hs=o.hist[justBatted][slot],lastSt=hs[hs.length-1];if(lastSt)lastSt.positions.push(POSE[o.pos[justBatted][slot]]||'');delete o.pendDef[justBatted][slot]});
  return 1};
  const rn=(r,k)=>{const s=o.top?'a':'h';o.sc[s][o.in-1]=(o.sc[s][o.in-1]||0)+1;rc++;const q=Q(r.p);q.R++;if(!r.u&&!taint)q.ER++;if(k&&cb&&!man)cb.RBI++;o.lead.push({d:tot(o,'a')-tot(o,'h'),a:o.pit.a,h:o.pit.h})};
+ const fixPastRuns=n=>{if(!n||cur.length)return;const le=o.log.find(l=>l.items===o.lastPA);if(le)le.runs=(le.runs||0)+n;paRc0=rc};
  const mv=(n,k)=>{for(let x=3;x>0;x--)if(o.bs[x]){const y=x+n;if(y>3)rn(o.bs[x],k);else o.bs[y]=o.bs[x];o.bs[x]=null}};
  const N=g.inn||9;
  const fid=(d,k)=>k==1?o.pit[d]:o.lu[d][o.pos[d].findIndex(p=>POSN[p]==k)],F=(id,pk)=>{const key=id+'_'+pk;return o.fd[key]||(o.fd[key]={pid:id,pk,PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0})};
@@ -242,14 +243,14 @@ function calc(g){
    if(isO||to){if(to)B(r.id).SB++;const ended=out();const cntTxt=`，${['','一','兩','三'][o.lo]}人出局`;
     if(nested){o.lastPA.push({s:advText+cntTxt})}
     else{cur.push({s:advText});mk=cur[cur.length-1];if(ended){o.log.push({in:inn,top:tp,sum:`${bo(bid)}：打席未完成（三出局）`,pi,items:cur,runs:rc-paRc0});o.lastPA=cur;cur=[];paRc0=rc}}}
-   else{if(nested){o.lastPA.push({s:advText})}else{cur.push({s:advText});mk=cur[cur.length-1]}if(e.act=='SB')B(r.id).SB++;if(e.base==3)rn(r,0);else{if(o.bs[e.base+1])o.collideN++;o.bs[e.base+1]=r}}}
+   else{if(nested){o.lastPA.push({s:advText})}else{cur.push({s:advText});mk=cur[cur.length-1]}if(e.act=='SB')B(r.id).SB++;if(e.base==3){rn(r,0);if(nested)fixPastRuns(1)}else{if(o.bs[e.base+1])o.collideN++;o.bs[e.base+1]=r}}}
   else if(e.t=='pke'){const r0=[null,o.bs[1],o.bs[2],o.bs[3]];cb=null;
    const s0=o.top?'a':'h',d0=o.top?'h':'a',bid=o.lu[s0][o.bi[s0]%9],inn=o.in,tp=o.top,pi=o.pit[d0],sc=[],ou=[],mo=[],parts=[];
    for(let x=1;x<4;x++){const r=r0[x],c=r?o.bs.indexOf(r):-1;if(c<1)continue;const dd=e.rv[x]??x;
     if(dd=='x'){ou.push(r);o.bs[c]=null;parts.push(`${BN[x]}跑者 ${pname(r.id)} 出局`)}
     else if(dd>=4){r.u=true;sc.push(r);o.bs[c]=null;parts.push(`${BN[x]}跑者 ${pname(r.id)} 回本壘得分`)}
     else if(dd>c){r.u=true;mo.push([dd,r]);o.bs[c]=null;parts.push(`${BN[x]}跑者 ${pname(r.id)} 上${BN[dd]}`)}}
-   mo.forEach(([dd,r])=>{if(o.bs[dd])o.collideN++;o.bs[dd]=r});sc.forEach(r=>rn(r,0));
+   mo.forEach(([dd,r])=>{if(o.bs[dd])o.collideN++;o.bs[dd]=r});sc.forEach(r=>rn(r,0));fixPastRuns(sc.length);
    o.E[d0]++;{const key=pi+'_1',f=o.fd[key]||(o.fd[key]={pid:pi,pk:1,PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0});f.E++}
    {const t=`投手 ${pname(pi)} 牽制失誤${parts.length?'，'+parts.join('，'):''}`;if(cur.length)note(t);else if(o.lastPA)o.lastPA.push({s:t});else note(t)}
    let ed=0;ou.forEach(()=>{if(!ed)ed=out()});
@@ -259,7 +260,7 @@ function calc(g){
    const parts=[],mo2=[],sc2=[];
    for(let x=3;x>0;x--)if(o.bs[x]&&e.rv&&e.rv[x]!=null&&e.rv[x]!=x){const r=o.bs[x],dd=e.rv[x];o.bs[x]=null;r.u=true;
     if(dd>=4){sc2.push(r);parts.push(`${BN[x]}跑者 ${pname(r.id)} 回本壘得分`)}else{mo2.push([dd,r]);parts.push(`${BN[x]}跑者 ${pname(r.id)} 上${BN[dd]}`)}}
-   mo2.forEach(([dd,r])=>{if(o.bs[dd])o.collideN++;o.bs[dd]=r});sc2.forEach(r=>rn(r,0));
+   mo2.forEach(([dd,r])=>{if(o.bs[dd])o.collideN++;o.bs[dd]=r});sc2.forEach(r=>rn(r,0));fixPastRuns(sc2.length);
    o.E[d0]++;{const idx=o.pos[d0].findIndex(p=>POSN[p]==e.ef),epid=e.ef==1?o.pit[d0]:(idx<0?null:o.lu[d0][idx]);if(epid){const key=epid+'_'+e.ef,f=o.fd[key]||(o.fd[key]={pid:epid,pk:e.ef,PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0});f.E++}}
    {const t=`${FN[e.ef]||''}${e.et=='T'?'傳球':'接球'}失誤${parts.length?'，'+parts.join('，'):''}`;const tgt=cur.length?cur:o.lastPA;let ti=tgt?tgt.length-1:-1;while(ti>=0&&tgt[ti].s.startsWith('打點：'))ti--;if(tgt&&ti>=0)tgt[ti].s+='。'+t;else note(t)}}
   else if(e.t=='wp'){const r0=[null,o.bs[1],o.bs[2],o.bs[3]];cb=null;if(e.pk)pitchF(e.pk);
