@@ -1,7 +1,7 @@
 // 棒球記錄 - Service Worker
 // Cache-first: 每次有新版本就換一個新的快取名稱（CACHE_VERSION），
 // 瀏覽器會自動下載新版並在下次啟動時換上，不用使用者手動清快取。
-const CACHE_VERSION = 'baseball-scorer-v1';
+const CACHE_VERSION = 'baseball-scorer-v2';
 const APP_SHELL = [
   './baseball.html',
   './manifest.json',
