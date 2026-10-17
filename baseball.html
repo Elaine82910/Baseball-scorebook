@@ -381,7 +381,7 @@ function calc(g){
    if(n<2||missing.some(x=>ord[x]!=1)||missing.length>1)return;
    if(missing.length==1&&n==2){
     const px=missing[0],fx=1-px,otherIdx=idxs[fx],oldPitcher=o.pit[side],newPitcher=o.lu[side][otherIdx];
-    o.pit[side]=newPitcher;Q(newPitcher);pitEnter(side,newPitcher);
+    o.pit[side]=newPitcher;Q(newPitcher);pitEnter(side,newPitcher);o.pitOrder[side].push(newPitcher);
     o.lu[side][otherIdx]=oldPitcher;
     const hs=o.hist[side][otherIdx];hs.push({pid:oldPitcher,tag:'',positions:[POSE[o.pos[side][otherIdx]]||'']});
     delete o.pendDef[side][otherIdx];
@@ -391,7 +391,7 @@ function calc(g){
    }
    const players=idxs.map(i=>o.lu[side][i]),oldPit=o.pit[side];
    idxs.forEach((i,x)=>{o.pos[side][i]=POSNAME[ord[(x+1)%n]];const hs=o.hist[side][i],cur2=hs[hs.length-1];cur2.positions.push(POSE[o.pos[side][i]]||'');delete o.pendDef[side][i]});
-   const ni=o.pos[side].findIndex(p=>p=='投');if(ni>=0&&o.lu[side][ni]!=oldPit){o.pit[side]=o.lu[side][ni];Q(o.pit[side]);pitEnter(side,o.pit[side])}
+   const ni=o.pos[side].findIndex(p=>p=='投');if(ni>=0&&o.lu[side][ni]!=oldPit){o.pit[side]=o.lu[side][ni];Q(o.pit[side]);pitEnter(side,o.pit[side]);o.pitOrder[side].push(o.pit[side])}
    idxs.forEach((i,x)=>{note(`更換守備：${pn(players[x])}　${FN[ord[x]]} ➡︎ ${FN[ord[(x+1)%n]]}。`)});
   }
   else if(e.t=='pr'){const r=o.bs[e.base];if(!r)return;const sd=o.top?'a':'h',sl=o.lu[sd].indexOf(r.id);if(sl>=0){o.lu[sd][sl]=e.pid;o.hist[sd][sl].push({pid:e.pid,tag:'PR',positions:[POSE[o.pos[sd][sl]]||'']});o.pendDef[sd][sl]=true}o.gone[sd].push(r.id);o.bs[e.base]={...r,id:e.pid};note(`更換代跑：${pn(r.id)} ➡︎ ${pn(e.pid)}`)}
