@@ -98,7 +98,7 @@ const abbr=(res,fs,ctx)=>{ctx=ctx||{};const d=fs&&fs.length?DIRAB[fs[0]]||'':'';
 const FN={1:'投手',2:'捕手',3:'一壘手',4:'二壘手',5:'三壘手',6:'游擊手',7:'左外野手',8:'中外野手',9:'右外野手'},SN={1:'投',2:'捕',3:'一',4:'二',5:'三',6:'游',7:'左',8:'中',9:'右'},FP={8:[50,10],7:[15,26],9:[85,26],6:[34,46],4:[66,46],5:[17,68],3:[83,68],1:[50,62],2:[50,90]};
 const POSN={'投':1,'捕':2,'一壘':3,'二壘':4,'三壘':5,'游擊':6,'左外':7,'中外':8,'右外':9};
 const POSNAME=Object.fromEntries(Object.entries(POSN).map(([k,v])=>[v,k]));
-const avail=(g,o,s)=>{const pool=g.mode=='practice'?T(g[s]).players.map(p=>p.id):g.bn[s];return pool.filter(id=>(g.mode=='practice'||!o.gone[s].includes(id))&&!o.lu[s].includes(id)&&o.pit[s]!=id)};
+const avail=(g,o,s)=>{const pool=g.mode=='practice'?[...new Set([...g.bn[s],...o.gone[s]])]:g.bn[s];return pool.filter(id=>(g.mode=='practice'||!o.gone[s].includes(id))&&!o.lu[s].includes(id)&&o.pit[s]!=id)};
 const bases=(o,ok)=>{const d=(cx,cy,on,x)=>`<polygon points="${cx},${cy-13} ${cx+13},${cy} ${cx},${cy+13} ${cx-13},${cy}" fill="${on?'#f5a300':'none'}" stroke="${ok?'#f5a300':'currentColor'}" stroke-width="2"${ok?` pointer-events="all" style="cursor:pointer" onclick="V.tb=${x};R()"`:''}/>`;return `<svg viewBox="0 0 100 70" width=70 height=49>${d(50,15,o.bs[2],2)}${d(20,42,o.bs[3],3)}${d(80,42,o.bs[1],1)}</svg>`};
 const PIC=(k,w=20)=>{const G='#22c55e',Y='#f5c400',sv=b=>`<svg class=pi style="width:${w}px;height:${w}px" viewBox="0 0 20 20">${b}</svg>`;return {B:sv(`<circle cx=10 cy=10 r=8.5 fill="${G}"/>`),S:sv(`<circle cx=10 cy=10 r=8.5 fill="${Y}"/>`),W:sv(`<circle cx=10 cy=10 r=6.5 fill=none stroke="${Y}" stroke-width=3.8 />`),F:sv(`<polygon points="10,2 18.5,17.5 1.5,17.5" fill="${Y}"/>`)}[k]||''};
 const SY={H:'D',X:'●',U:'⊘'};
