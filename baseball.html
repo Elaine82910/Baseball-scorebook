@@ -106,6 +106,9 @@ const lamp=(l,n,m,c)=>`<div class=lp><span>${l}</span>${[...Array(m)].map((_,i)=
 const POSE={'投':'P','捕':'C','一壘':'1B','二壘':'2B','三壘':'3B','游擊':'SS','左外':'LF','中外':'CF','右外':'RF','指定':'DH'};
 const NUMENG={1:'P',2:'C',3:'1B',4:'2B',5:'3B',6:'SS',7:'LF',8:'CF',9:'RF'};
 const ENGNUM=Object.fromEntries(Object.keys(POSN).map(k=>[POSE[k],POSN[k]]));
+const pendSlotFor=(o,side,k)=>{for(let si=0;si<9;si++){if(o.pos[side][si]||!o.lu[side][si])continue;const hs=o.hist[side][si];if(!hs||hs.length<2)continue;const pp=hs[hs.length-2].positions.slice(-1)[0];if(pp&&ENGNUM[pp]==k)return si}return -1};
+const findPosSlot=(o,side,k)=>{const i=o.pos[side].findIndex(p=>POSN[p]==k);return i>=0?i:pendSlotFor(o,side,k)};
+const pendOccupants=(o,side)=>[...Array(9).keys()].filter(si=>!o.pos[side][si]&&o.lu[side][si]).map(si=>o.lu[side][si]);
 const BN=['','一壘','二壘','三壘'];
 const RN={adv:'進壘',SB:'盜壘成功',CS:'盜壘失敗出局',WP:'暴投進壘',PB:'捕逸進壘',PO:'牽制出局',TO:'離壘被觸殺出局',out:'出局'};
 let S;try{S=JSON.parse(localStorage.getItem('bb'))}catch(e){}S=S||{teams:[],games:[]};
@@ -292,7 +295,7 @@ function calc(g){
   else if(e.t=='tb'){if(e.pid){o.bs[e.base]={id:e.pid,p:o.pit[o.top?'h':'a'],u:true};note(`突破僵局制：${bo(e.pid)} 上${BN[e.base]}`)}else{o.bs[e.base]=null;note(`突破僵局制：清除${BN[e.base]}跑者`)}}
   else if(e.t=='pc'){const old=o.pit[e.side],sl=o.lu[e.side].indexOf(old);o.pit[e.side]=e.pid;Q(e.pid);pitEnter(e.side,e.pid);o.pitOrder[e.side].push(e.pid);o.gone[e.side].push(old);if(sl>=0&&o.pos[e.side][sl]=='投'){o.lu[e.side][sl]=e.pid;o.hist[e.side][sl].push({pid:e.pid,tag:'',positions:[POSE[o.pos[e.side][sl]]||'']})}note(`更換投手：${pn(old)} ➡︎ ${pn(e.pid)}`)}
   else if(e.t=='dfc'){const side=e.side,chain=e.order,subs=e.subPids||(e.subPid?[e.subPid]:[]),K=chain.length,S=subs.length;
-   const roleInfo=r=>{const idx=o.pos[side].findIndex(p=>POSN[p]==r);return idx<0?{slot:null,pid:r==1?o.pit[side]:null}:{slot:idx,pid:o.lu[side][idx]}};
+   const roleInfo=r=>{const idx=findPosSlot(o,side,r);return idx<0?{slot:null,pid:r==1?o.pit[side]:null}:{slot:idx,pid:o.lu[side][idx]}};
    const info2=chain.map(roleInfo);
    const setRole=(slot,mover,role)=>{const lbl=role==1?'投':POSNAME[role];if(slot!=null){o.pos[side][slot]=lbl;delete o.pendDef[side][slot];const hs=o.hist[side][slot];if(hs&&hs.length)hs[hs.length-1].positions.push(POSE[lbl]||'')}if(role==1){o.pit[side]=mover;if(mover){Q(mover);pitEnter(side,mover);o.pitOrder[side].push(mover)}}};
    const shiftNotes=[],subNotes=[];
@@ -376,7 +379,7 @@ function calc(g){
     notes.forEach(t=>note(t));
     return;
    }
-   const n=ord.length;let idxs=ord.map(k=>o.pos[side].findIndex(p=>POSN[p]==k));
+   const n=ord.length;let idxs=ord.map(k=>findPosSlot(o,side,k));
    const missing=idxs.map((i,x)=>i<0?x:-1).filter(x=>x>=0);
    if(n<2||missing.some(x=>ord[x]!=1)||missing.length>1)return;
    if(missing.length==1&&n==2){
@@ -394,8 +397,12 @@ function calc(g){
    const ni=o.pos[side].findIndex(p=>p=='投');if(ni>=0&&o.lu[side][ni]!=oldPit){o.pit[side]=o.lu[side][ni];Q(o.pit[side]);pitEnter(side,o.pit[side]);o.pitOrder[side].push(o.pit[side])}
    idxs.forEach((i,x)=>{note(`更換守備：${pn(players[x])}　${FN[ord[x]]} ➡︎ ${FN[ord[(x+1)%n]]}。`)});
   }
-  else if(e.t=='pr'){const r=o.bs[e.base];if(!r)return;const sd=o.top?'a':'h',sl=o.lu[sd].indexOf(r.id);if(sl>=0){o.lu[sd][sl]=e.pid;o.hist[sd][sl].push({pid:e.pid,tag:'PR',positions:[POSE[o.pos[sd][sl]]||'']});o.pendDef[sd][sl]=true}o.gone[sd].push(r.id);o.bs[e.base]={...r,id:e.pid};note(`更換代跑：${pn(r.id)} ➡︎ ${pn(e.pid)}`)}
-  else if(e.t=='sb'){const old=o.lu[e.side][e.idx];const wasDH=o.pos[e.side][e.idx]=='指定'&&e.pid==o.pit[e.side];o.gone[e.side].push(old);o.lu[e.side][e.idx]=e.pid;if(wasDH)o.pos[e.side][e.idx]='投';o.hist[e.side][e.idx].push({pid:e.pid,tag:'PH',positions:[POSE[o.pos[e.side][e.idx]]||'']});if(!wasDH)o.pendDef[e.side][e.idx]=true;note(`更換代打：${pn(old)} ➡︎ ${pn(e.pid)}`+(wasDH?'　（取消指定打擊，投手兼任打擊）':''))}
+  else if(e.t=='pr'){const r=o.bs[e.base];if(!r)return;const sd=o.top?'a':'h',sl=o.lu[sd].indexOf(r.id);if(sl>=0){if(g.mode=='practice')o.pos[sd][sl]='';o.lu[sd][sl]=e.pid;o.hist[sd][sl].push({pid:e.pid,tag:'PR',positions:[POSE[o.pos[sd][sl]]||'']});o.pendDef[sd][sl]=true}o.gone[sd].push(r.id);o.bs[e.base]={...r,id:e.pid};note(`更換代跑：${pn(r.id)} ➡︎ ${pn(e.pid)}`)}
+  else if(e.t=='sb'){const old=o.lu[e.side][e.idx];const wasDH=o.pos[e.side][e.idx]=='指定'&&e.pid==o.pit[e.side];o.gone[e.side].push(old);o.lu[e.side][e.idx]=e.pid;if(wasDH)o.pos[e.side][e.idx]='投';else if(g.mode=='practice')o.pos[e.side][e.idx]='';o.hist[e.side][e.idx].push({pid:e.pid,tag:'PH',positions:[POSE[o.pos[e.side][e.idx]]||'']});if(!wasDH)o.pendDef[e.side][e.idx]=true;note(`更換代打：${pn(old)} ➡︎ ${pn(e.pid)}`+(wasDH?'　（取消指定打擊，投手兼任打擊）':''))}
+  else if(e.t=='dpos'){const side=e.side,slot=e.slot,label=e.pos,pid=e.pid,cur=o.lu[side][slot];
+   if(pid!=cur){o.gone[side].push(cur);o.lu[side][slot]=pid;o.hist[side][slot].push({pid,tag:'DEF',positions:[POSE[label]||'']});note(`更換守備：${pn(pid)} ➡︎ ${FN[POSN[label]]||label||''} ${pn(cur)}`)}
+   else{const hs=o.hist[side][slot],lastSt=hs[hs.length-1];if(lastSt)lastSt.positions.push(POSE[label]||'');note(`更換守備：${pn(pid)} ➡︎ ${FN[POSN[label]]||label||''}`)}
+   o.pos[side][slot]=label;if(label=='投'){o.pit[side]=pid;Q(pid);pitEnter(side,pid);o.pitOrder[side].push(pid)}delete o.pendDef[side][slot]}
  };
  g.ev.forEach(e=>{if(o.over)return;oc=0;mk=null;noAuto=false;H(e);if(oc&&mk&&!noAuto)mk.s+=`，${['','一','兩','三'][o.lo]}人出局`;if(o.deferredDef&&o.deferredDef.length){o.deferredDef.forEach(t=>o.log.push({in:o.in,top:o.top,sum:t}));o.deferredDef=[]}if(!o.over&&!o.top&&o.in>=N&&tot(o,'h')>tot(o,'a')){o.over=1;o.wo=1}});
  o.cur=cur;
@@ -439,9 +446,9 @@ const toggleRot=k=>{V.rot=V.rot||[];V.rot=V.rot.includes(k)?V.rot.filter(x=>x!=k
 const confirmRot=()=>{const g=G(),o=calc(g),d=o.top?'h':'a',ord=V.rot||[];V.rot=[];V.mod=null;if(ord.length>=2)push({t:'rot',side:d,order:ord})};
 const toggleSub=id=>{V.subPids=V.subPids||[];const i=V.subPids.indexOf(id);if(i<0)V.subPids.push(id);else V.subPids.splice(i,1);R()};
 const confirmDef=()=>{const subs=V.subPids||[];if(subs.length>=1&&V.rot.length>=subs.length&&(subs.length>1||V.rot.length>=2)){const pids=subs.slice(),order=V.rot.slice(),g=G(),o=calc(g),d=o.top?'h':'a';V.rot=[];V.subPids=[];V.mod=null;push({t:'dfc',side:d,order,subPids:pids});return}if(V.rot.length>=2){confirmRot();return}if(V.rot.length==1&&subs.length==1){const k=V.rot[0],pid=subs[0];V.rot=[];V.subPids=[];V.mod=null;doDf(k,pid)}};
-const doDf=(k,pid)=>{const g=G(),o=calc(g),d=o.top?'h':'a';V.mod=null;if(k==1)push({t:'pc',side:d,pid});else push({t:'df',side:d,slot:o.pos[d].findIndex(p=>POSN[p]==k),pid})};
+const doDf=(k,pid)=>{const g=G(),o=calc(g),d=o.top?'h':'a';V.mod=null;if(k==1){push({t:'pc',side:d,pid});return}const direct=o.pos[d].findIndex(p=>POSN[p]==k);if(direct>=0){push({t:'df',side:d,slot:direct,pid});return}const pend=pendSlotFor(o,d,k);if(pend>=0)push({t:'dpos',side:d,slot:pend,pos:POSNAME[k],pid})};
 const doPr=(x,pid)=>{V.mod=null;push({t:'pr',base:x,pid})};
-function smodal(){const g=G(),o=calc(g),bt=o.top?'a':'h',d=o.top?'h':'a',run=V.mod=='run',sd=run?bt:d,av=avail(g,o,sd),cp=k=>{if(k==1)return o.pit[d];const i=o.pos[d].findIndex(p=>POSN[p]==k);return i<0?null:o.lu[d][i]};
+function smodal(){const g=G(),o=calc(g),bt=o.top?'a':'h',d=o.top?'h':'a',run=V.mod=='run',sd=run?bt:d,av=run?avail(g,o,sd):[...new Set([...avail(g,o,sd),...pendOccupants(o,sd)])],cp=k=>{if(k==1)return o.pit[d];const i=o.pos[d].findIndex(p=>POSN[p]==k);return i<0?null:o.lu[d][i]};
  V.rot=V.rot||[];
  const cands=(run&&V.mk)?`<div class=c><b>${BN[V.mk]}跑者 ${pn(o.bs[V.mk].id)}　換成：</b><div class=row>${av.map(id=>btn(pn(id),`doPr(${V.mk},'${id}')`)).join('')||'沒有可換的候補選手'}</div></div>`:'';
  const top=run?([3,2,1].filter(x=>o.bs[x]).map(x=>btn(`${BN[x]} ${pn(o.bs[x].id)}`,`V.mk=${x};R()`,V.mk==x?'pri':'')).join('')||'壘上沒有跑者'):(()=>{const dhIdx=o.pos[d].findIndex(p=>p=='指定'),dhId=dhIdx>=0?o.lu[d][dhIdx]:null;return `<div class=fd><svg viewBox="0 0 100 100" preserveAspectRatio="none"><rect width=100 height=100 fill="#2d7a3e"/><path d="M50 92L0 42M50 92L100 42" stroke="#fff" stroke-width=.6 /><path d="M50 90L80 62L50 34L20 62Z" fill="#c9a26b"/></svg>${Object.keys(FP).map(k=>{const id=cp(+k),ri=V.rot.indexOf(+k);return `<button class="fb ${ri>=0?'on':''}" style="left:${FP[k][0]}%;top:${FP[k][1]}%" onclick="toggleRot(${k})">${NUMENG[k]}${ri>=0?`(${ri+1})`:''}<br><small>${id?P(id).name:'－'}</small></button>`}).join('')}${dhId?`<button class="fb dhbox ${V.rot.includes('DH')?'on':''}" style="left:8%;top:92%" onclick="toggleRot('DH')"><b>DH${V.rot.includes('DH')?`(${V.rot.indexOf('DH')+1})`:''}</b><small>${P(dhId)?P(dhId).name:'－'}</small></button>`:''}</div>`})();
