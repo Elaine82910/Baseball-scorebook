@@ -310,9 +310,18 @@ function calc(g){
    for(let j=0;j<S;j++){
     const leaveInfo=info2[K-S+j],leaving=leaveInfo.pid,role=chain[j],sub=subs[j];
     if(leaving)o.gone[side].push(leaving);
-    if(leaveInfo.slot!=null){o.lu[side][leaveInfo.slot]=sub;o.hist[side][leaveInfo.slot].push({pid:sub,tag:'DEF',positions:[]});setRole(leaveInfo.slot,sub,role)}
+    let slot=leaveInfo.slot,dhCancelled=false;
+    if(slot==null){
+     // the role being vacated has no batting slot of its own (e.g. the pitcher role while a DH is active) —
+     // the incoming sub has no slot to take over directly, so use the DH's slot instead (cancelling the DH),
+     // falling back to any other still-pending slot rather than silently dropping the sub
+     const dhIdx=o.pos[side].findIndex(p=>p=='指定');
+     if(dhIdx>=0&&o.lu[side][dhIdx]!=null){slot=dhIdx;dhCancelled=true}
+     else if(pendPool.length){slot=pendPool[0];pendPool=pendPool.slice(1)}
+    }
+    if(slot!=null){o.lu[side][slot]=sub;o.hist[side][slot].push({pid:sub,tag:'DEF',positions:[]});setRole(slot,sub,role)}
     else setRole(null,sub,role);
-    subNotes.push(`更換守備：${pn(sub)} ➡︎ ${role==1?'投手':FN[role]}`);
+    subNotes.push(`更換守備：${pn(sub)} ➡︎ ${role==1?'投手':FN[role]}`+(dhCancelled?'　（取消指定打擊）':''));
    }
    subNotes.concat(shiftNotes).forEach(t=>note(t));}
   else if(e.t=='df'){const old=o.lu[e.side][e.slot];o.gone[e.side].push(old);o.lu[e.side][e.slot]=e.pid;o.hist[e.side][e.slot].push({pid:e.pid,tag:'DEF',positions:[POSE[o.pos[e.side][e.slot]]||'']});delete o.pendDef[e.side][e.slot];note(`更換守備：${pn(e.pid)} ➡︎ ${FN[POSN[o.pos[e.side][e.slot]]]||''} ${pn(old)}`)}
