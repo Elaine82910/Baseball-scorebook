@@ -732,7 +732,7 @@ function rec(g,o){const bt=o.top?'a':'h',df=o.top?'h':'a',bi=o.bi[bt]%9;
  <b>擊球結果</b>
  <div class="g g3">${[['IH','bhit'],['GO','bout'],['DP','bout'],['1B','bhit'],['LO','bout'],['TP','bout'],['2B','bhit'],['FO','bout'],['SH','bsac'],['3B','bhit'],['FF','bout'],['SF','bsac'],['HR','bhit'],['FC','bout'],['E','berr']].map(([k,cls])=>`<button class="b ${cls}" ${((k=='DP')&&o.outs>=2)||((k=='FC'||k=='DP')&&!hr)||(k=='TP'&&(o.outs>0||[1,2,3].filter(x=>o.bs[x]).length<2))||(k=='SF'&&!(o.outs<2&&o.bs[3]))||(k=='SH'&&!hr)?'disabled':''} onclick="play('${k}')">${RLB[k]}</button>`).join('')}</div>
  <div class=c><div class=row>${btn('更換守備',"V.mod='def';V.mk=0;V.rot=[];V.subPids=[];R()")}${btn('更換跑壘者',"V.mod='run';V.mk=0;R()")}</div><div class=row>更換代打 <select id=sh>${sl(bt,true)}</select>${btn('確定',"sub('h')")}</div></div>
- <div class=row>${btn('↩ 復原上一步','undo()')}</div></div>`}
+ </div><div class=row>${btn('↩ 復原上一步','undo()')}</div>`}
 function recLog(g,o){
  if(g.lu.a.some(x=>!x.p)||g.lu.h.some(x=>!x.p))return '<p>請先在「名單」完成兩隊各 9 位先發。</p>';
  return `<h3 style="display:flex;align-items:center;position:relative"><span>逐打席紀錄</span><button class="b hbtn" style="position:static;margin-left:auto;font-size:16px" onclick="showHint('長按該打席可手動修改紀錄內容')">⚾</button>${V.hint?`<div class=toast style="right:0;top:34px">${V.hint}</div>`:''}</h3>${logHtml(g,o)}`}
