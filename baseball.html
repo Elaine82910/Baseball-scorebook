@@ -616,6 +616,7 @@ function pkModal(){
 const ADJ_BAT=[['PA','打席'],['AB','打數'],['H','安打'],['d2','二壘打'],['d3','三壘打'],['HR','全壘打'],['RBI','打點'],['SB','盜壘'],['BB','四壞'],['HBP','觸身'],['K','三振'],['SF','犧飛'],['SH','犧短'],['GO','滾地出局'],['AO','飛球出局']];
 const ADJ_PIT=[['outs','局數（出局數）'],['P','球數'],['S','好球'],['B','壞球'],['K','三振'],['BB','四壞'],['HBP','觸身'],['H','被安打'],['HR','被全壘打'],['R','失分'],['ER','自責分'],['BF','面對打者']];
 const ADJ_FD=pk=>pk==2?[['PO','刺殺'],['A','助殺'],['E','失誤'],['DP','雙殺參與'],['PB','捕逸'],['CS','阻殺'],['SBA','被盜成功']]:[['PO','刺殺'],['A','助殺'],['E','失誤'],['DP','雙殺參與']];
+const defPkSet=(o,side,pid)=>{const set=new Set();if(o.pit[side]==pid||(o.pitOrder[side]||[]).includes(pid))set.add(1);(o.hist[side]||[]).forEach(slot=>slot.forEach(st=>{if(st.pid==pid)(st.positions||[]).forEach(p=>{if(p&&ENGNUM[p])set.add(ENGNUM[p])})}));return set};
 function adjModal(){
  const g=G(),o=calc(g),a=V.adj;
  if(a.scope){
@@ -624,17 +625,17 @@ function adjModal(){
   let label='',body='';
   if(a.scope=='bat'){label='打擊';const cur=o.bat[a.pid]||{};body=ADJ_BAT.map(([f,l])=>inpRow(f,l,cur[f])).join('')}
   else if(a.scope=='pit'){label='投球';const cur=o.pt[a.pid]||{};body=ADJ_PIT.map(([f,l])=>inpRow(f,l,cur[f])).join('')}
-  else{label='守備';body=Object.keys(o.fd).filter(k=>k.startsWith(a.pid+'_')).map(key=>{const fd=o.fd[key];return `<h4>${FN[fd.pk]}</h4>`+ADJ_FD(fd.pk).map(([f,l])=>inpRow2(fd.pk,f,l,fd[f])).join('')}).join('')}
+  else{label='守備';const pkSet=new Set();Object.keys(o.fd).filter(k=>k.startsWith(a.pid+'_')).forEach(k=>pkSet.add(o.fd[k].pk));defPkSet(o,a.side||'a',a.pid).forEach(pk=>pkSet.add(pk));body=[...pkSet].sort((x,y)=>x-y).map(pk=>{const fd=o.fd[a.pid+'_'+pk]||{PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0};return `<h4>${FN[pk]}</h4>`+ADJ_FD(pk).map(([f,l])=>inpRow2(pk,f,l,fd[f])).join('')}).join('')}
   return `<div class=mo><div class=md><b>數據調整：${pn(a.pid)}　${label}</b>`+body+`<div class=row>${btn('儲存','adjSave()','pri')}</div><div class=row>${btn('返回','V.adj.scope=null;R()')}${btn('取消','V.adj=null;R()')}</div></div></div>`;
  }
  const side=a.side||'a',roster=T(g[side]).players.map(p=>p.id);
- const pids=roster.filter(pid=>o.bat[pid]||o.pt[pid]||Object.keys(o.fd).some(k=>k.startsWith(pid+'_')));
+ const pids=roster.filter(pid=>o.bat[pid]||o.pt[pid]||Object.keys(o.fd).some(k=>k.startsWith(pid+'_'))||defPkSet(o,side,pid).size);
  if(!pids.length)return `<div class=mo><div class=md><b>數據調整</b><div class=row>${['a','h'].map(s=>btn(T(g[s]).name,`V.adj={side:'${s}'};R()`,side==s?'pri':'')).join('')}</div><div class=row><i>本場尚無數據</i></div><div class=row>${btn('取消','V.adj=null;R()')}</div></div></div>`;
  if(!a.pid||!pids.includes(a.pid))a.pid=pids[0];
  const pid=a.pid,cats=[];
  if(o.bat[pid])cats.push(['bat','打擊']);
  if(o.pt[pid])cats.push(['pit','投球']);
- if(Object.keys(o.fd).some(k=>k.startsWith(pid+'_')))cats.push(['fd','守備']);
+ if(Object.keys(o.fd).some(k=>k.startsWith(pid+'_'))||defPkSet(o,side,pid).size)cats.push(['fd','守備']);
  if(!a.cat||!cats.some(c=>c[0]==a.cat))a.cat=cats[0]?cats[0][0]:null;
  return `<div class=mo><div class=md><b>數據調整</b><div class=row>${['a','h'].map(s=>btn(T(g[s]).name,`V.adj={side:'${s}'};R()`,side==s?'pri':'')).join('')}</div>
   <div class=row>更動選手 <select onchange="V.adj.pid=this.value;V.adj.cat=null;R()">${opt(pids.map(id=>[id,pn(id)]),pid)}</select></div>
@@ -650,7 +651,7 @@ function adjSave(){
  const g=G(),o=calc(g),a=V.adj,pid=a.pid,evs=[];
  if(a.scope=='bat'){const cur=o.bat[pid]||{};ADJ_BAT.forEach(([f])=>{const el=document.getElementById('adj-f-'+f);if(!el)return;const nv=+el.value||0,delta=nv-(cur[f]||0);if(delta)evs.push({t:'adj',scope:'bat',pid,field:f,delta})})}
  else if(a.scope=='pit'){const cur=o.pt[pid]||{};ADJ_PIT.forEach(([f])=>{const el=document.getElementById('adj-f-'+f);if(!el)return;const nv=+el.value||0,delta=nv-(cur[f]||0);if(delta)evs.push({t:'adj',scope:'pit',pid,field:f,delta})})}
- else{Object.keys(o.fd).filter(k=>k.startsWith(pid+'_')).forEach(key=>{const fd=o.fd[key],pk=fd.pk;ADJ_FD(pk).forEach(([f])=>{const el=document.getElementById('adj-f-'+pk+'-'+f);if(!el)return;const nv=+el.value||0,delta=nv-(fd[f]||0);if(delta)evs.push({t:'adj',scope:'fd',pid,pk,field:f,delta})})})}
+ else{const pkSet=new Set();Object.keys(o.fd).filter(k=>k.startsWith(pid+'_')).forEach(k=>pkSet.add(o.fd[k].pk));defPkSet(o,a.side||'a',pid).forEach(pk=>pkSet.add(pk));pkSet.forEach(pk=>{const fd=o.fd[pid+'_'+pk]||{PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0};ADJ_FD(pk).forEach(([f])=>{const el=document.getElementById('adj-f-'+pk+'-'+f);if(!el)return;const nv=+el.value||0,delta=nv-(fd[f]||0);if(delta)evs.push({t:'adj',scope:'fd',pid,pk,field:f,delta})})})}
  const changed=evs.length>0;
  if(changed)push(...evs);
  V.adj=null;
