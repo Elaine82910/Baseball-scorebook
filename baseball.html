@@ -452,7 +452,7 @@ function calc(g){
    o.pos[side][slot]=label;if(label=='投'){o.pit[side]=pid;Q(pid);pitEnter(side,pid);o.pitOrder[side].push(pid)}delete o.pendDef[side][slot]}
   else if(e.t=='adj'){if(e.scope=='bat'){const b=B(e.pid);b[e.field]=(b[e.field]||0)+e.delta}else if(e.scope=='pit'){const q=Q(e.pid);q[e.field]=(q[e.field]||0)+e.delta}else if(e.scope=='fd'){const f=F(e.pid,e.pk);f[e.field]=(f[e.field]||0)+e.delta}}
  };
- g.ev.forEach(e=>{if(o.over)return;oc=0;mk=null;noAuto=false;H(e);if(oc&&mk&&!noAuto)mk.s+=`，${['','一','兩','三'][o.lo]}人出局`;if(o.deferredDef&&o.deferredDef.length){o.deferredDef.forEach(t=>o.log.push({in:o.in,top:o.top,sum:t}));o.deferredDef=[]}if(!o.over&&!o.top&&o.in>=N&&tot(o,'h')>tot(o,'a')){o.over=1;o.wo=1}});
+ g.ev.forEach(e=>{if(o.over&&e.t!='adj')return;oc=0;mk=null;noAuto=false;H(e);if(oc&&mk&&!noAuto)mk.s+=`，${['','一','兩','三'][o.lo]}人出局`;if(o.deferredDef&&o.deferredDef.length){o.deferredDef.forEach(t=>o.log.push({in:o.in,top:o.top,sum:t}));o.deferredDef=[]}if(!o.over&&!o.top&&o.in>=N&&tot(o,'h')>tot(o,'a')){o.over=1;o.wo=1}});
  o.cur=cur;
  if(cur.length){const s=o.top?'a':'h',d=o.top?'h':'a';o.log.push({in:o.in,top:o.top,sum:`${bo(o.lu[s][o.bi[s]%9])}：${o.over?'打席未完成（比賽結束）':'打席進行中'}`,pi:o.pit[d],items:cur,open:1,runs:rc-paRc0});paRc0=rc}
  if(g.fin||o.over){const a=tot(o,'a'),h=tot(o,'h'),w=a>h?'a':h>a?'h':0;
