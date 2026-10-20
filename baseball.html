@@ -470,7 +470,7 @@ function calc(g){
  return o}
 
 /* ===== 操作 ===== */
-const R=()=>{save();try{const g=G();$('app').innerHTML=`<nav>${[['t','球隊'],['g','比賽']].map(([k,l])=>btn(l,`V.tab='${k}';V.gid=null;R()`,V.tab==k&&!g?'on':'')).join('')}<button class=b style="margin-left:auto" onclick="V.bk=true;R()">🗃️</button></nav><input type=file id=bkf accept=".json,application/json" style="display:none" onchange="importBackup(this.files[0])">`+(g?game(g):V.tab=='t'?teams():games())+(V.pend&&!V.h2?modal():'')+(V.mod?smodal():'')+(V.sp&&!V.spe?spModal():'')+(V.spe?speModal():'')+(V.wp?wpModal():'')+(V.adv?advModal():'')+(V.tb?tbModal():'')+(V.ds&&!V.dse?dsModal():'')+(V.dse?dseModal():'')+(V.confirm?confirmModal():'')+(V.bk?bkModal():'')+(V.rn?renameModal():'')+(V.gnm?gnameModal():'')+(V.pdf?pdfModal():'')+(V.rd?rdModal():'')+(V.h2?h2Modal():'')+(V.pk?pkModal():'')+(V.editLog?editLogModal():'')+(V.dm?drModal():'')+(V.warn?warnModal():'')+(V.adj?adjModal():'')}catch(e){console.error('render error',e);$('app').innerHTML=`<nav><button class=b onclick="V.gid=null;V.sub='rec';R()">回列表</button></nav><div class=c><b>這個畫面暫時無法顯示（資料可能有問題）。</b><br>可以按上面「回列表」返回，或稍後再試。<br><small style="opacity:.6">${(e&&e.message)||e}</small></div>`}};
+const R=()=>{save();try{const g=G();$('app').innerHTML=`<nav>${[['t','球隊'],['g','比賽']].map(([k,l])=>btn(l,`V.tab='${k}';V.gid=null;R()`,V.tab==k&&!g?'on':'')).join('')}<button class=b style="margin-left:auto" onclick="V.bk=true;R()">🗃️</button></nav><input type=file id=bkf accept=".json,application/json" style="display:none" onchange="importBackup(this.files[0])">`+(g?game(g):V.tab=='t'?teams():games())+(V.pend&&!V.h2?modal():'')+(V.mod?smodal():'')+(V.sp&&!V.spe?spModal():'')+(V.spe?speModal():'')+(V.wp?wpModal():'')+(V.adv?advModal():'')+(V.tb?tbModal():'')+(V.ds&&!V.dse?dsModal():'')+(V.dse?dseModal():'')+(V.confirm?confirmModal():'')+(V.bk?bkModal():'')+(V.rn?renameModal():'')+(V.gnm?gnameModal():'')+(V.pdf?pdfModal():'')+(V.rd?rdModal():'')+(V.h2?h2Modal():'')+(V.pk?pkModal():'')+(V.editLog?editLogModal():'')+(V.dm?drModal():'')+(V.warn?warnModal():'')+(V.adj?adjModal():'')+(V.toast?`<div class=toast style="position:fixed;left:50%;right:auto;top:auto;bottom:24px;transform:translateX(-50%);max-width:80vw;width:max-content;white-space:nowrap;z-index:999">${V.toast}</div>`:'')}catch(e){console.error('render error',e);$('app').innerHTML=`<nav><button class=b onclick="V.gid=null;V.sub='rec';R()">回列表</button></nav><div class=c><b>這個畫面暫時無法顯示（資料可能有問題）。</b><br>可以按上面「回列表」返回，或稍後再試。<br><small style="opacity:.6">${(e&&e.message)||e}</small></div>`}};
 function confirmModal(){const c=V.confirm;return `<div class=mo><div class=md><b>${c.msg}</b><div class=row>${btn('確定',"V.confirm.act();V.confirm=null;R()",'pri')}${btn('取消',"V.confirm=null;R()")}</div></div></div>`}
 function dsModal(){const d=V.ds;if(d.st==1)return `<div class=mo><div class=md><b>雙盜壘：這一球是？</b><div class=g>${btn('壞球',"dsPick('B')")}${btn('好球：未揮棒',"dsPick('S')")}${btn('好球：揮空',"dsPick('W')")}</div><div class=row>${btn('取消',"V.ds=null;R()")}</div></div></div>`;
  const o=calc(G());return `<div class=mo><div class=md><b>雙盜壘：跑者結果</b>${[3,2,1].filter(x=>o.bs[x]).map(x=>`<div class=c><b>${BN[x]}　${pn(o.bs[x].id)}</b><div class=row>${btn('盜壘成功',`setDs(${x},'S')`,d.res[x]=='S'?'pri':'')}${btn('盜壘失敗',`setDs(${x},'C')`,d.res[x]=='C'?'pri':'')}${x<3?btn('成功後離壘被觸殺',`setDs(${x},'T')`,d.res[x]=='T'?'pri':''):''}${btn((d.err?'✔ ':'')+'失誤',"dseErrToggle()",d.err?'pri':'')}</div></div>`).join('')}<div class=row>${btn('上一步',"V.ds.st=1;V.ds.err=null;R()")}${btn('確定',"dsOk()",'pri')}${btn('取消',"V.ds=null;R()")}</div></div></div>`}
@@ -622,7 +622,7 @@ function adjModal(){
   if(a.scope=='bat'){label='打擊';const cur=o.bat[a.pid]||{};body=ADJ_BAT.map(([f,l])=>inpRow(f,l,cur[f])).join('')}
   else if(a.scope=='pit'){label='投球';const cur=o.pt[a.pid]||{};body=ADJ_PIT.map(([f,l])=>inpRow(f,l,cur[f])).join('')}
   else{label='守備';body=Object.keys(o.fd).filter(k=>k.startsWith(a.pid+'_')).map(key=>{const fd=o.fd[key];return `<h4>${FN[fd.pk]}</h4>`+ADJ_FD(fd.pk).map(([f,l])=>inpRow2(fd.pk,f,l,fd[f])).join('')}).join('')}
-  return `<div class=mo><div class=md><b>數據調整：${pn(a.pid)}　${label}</b>`+body+`<div class=row>${btn('儲存','adjSave()','pri')}${btn('返回','V.adj.scope=null;R()')}${btn('取消','V.adj=null;R()')}</div></div></div>`;
+  return `<div class=mo><div class=md><b>數據調整：${pn(a.pid)}　${label}</b>`+body+`<div class=row>${btn('儲存','adjSave()','pri')}</div><div class=row>${btn('返回','V.adj.scope=null;R()')}${btn('取消','V.adj=null;R()')}</div></div></div>`;
  }
  const side=a.side||'a',roster=T(g[side]).players.map(p=>p.id);
  const pids=roster.filter(pid=>o.bat[pid]||o.pt[pid]||Object.keys(o.fd).some(k=>k.startsWith(pid+'_')));
@@ -648,10 +648,13 @@ function adjSave(){
  if(a.scope=='bat'){const cur=o.bat[pid]||{};ADJ_BAT.forEach(([f])=>{const el=document.getElementById('adj-f-'+f);if(!el)return;const nv=+el.value||0,delta=nv-(cur[f]||0);if(delta)evs.push({t:'adj',scope:'bat',pid,field:f,delta})})}
  else if(a.scope=='pit'){const cur=o.pt[pid]||{};ADJ_PIT.forEach(([f])=>{const el=document.getElementById('adj-f-'+f);if(!el)return;const nv=+el.value||0,delta=nv-(cur[f]||0);if(delta)evs.push({t:'adj',scope:'pit',pid,field:f,delta})})}
  else{Object.keys(o.fd).filter(k=>k.startsWith(pid+'_')).forEach(key=>{const fd=o.fd[key],pk=fd.pk;ADJ_FD(pk).forEach(([f])=>{const el=document.getElementById('adj-f-'+pk+'-'+f);if(!el)return;const nv=+el.value||0,delta=nv-(fd[f]||0);if(delta)evs.push({t:'adj',scope:'fd',pid,pk,field:f,delta})})})}
- if(evs.length)push(...evs);
- V.adj=null;R();
+ const changed=evs.length>0;
+ if(changed)push(...evs);
+ V.adj=null;
+ if(changed)toast('✓ 已更新數據');else R();
 }
 const showHint=t=>{V.hint=t;R();setTimeout(()=>{V.hint=null;R()},1000)};
+const toast=t=>{V.toast=t;R();setTimeout(()=>{V.toast=null;R()},1400)};
 const rdAdd=k=>{if(V.rd.seq.length&&V.rd.seq[V.rd.seq.length-1]==k)return;V.rd.seq.push(k);R()};
 const rdBack=()=>{V.rd.seq.pop();R()};
 const rdOk=()=>{if(!V.rd.seq.length)return;V.rv=V.rv||{};V.rv['rd'+V.rd.x]=V.rd.seq.slice();V.rv[V.rd.x]='xr';V.rd=null;R()};
