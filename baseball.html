@@ -316,7 +316,7 @@ function calc(g){
    if(ed){o.log.push({in:inn,top:tp,sum:`${bo(bid)}：打席未完成（三出局）`,pi,items:cur,runs:rc-paRc0});o.lastPA=cur;cur=[];paRc0=rc}}
   else if(e.t=='bk'){cb=null;const parts=[];for(let x=3;x>0;x--){const r=o.bs[x];if(!r)continue;o.bs[x]=null;if(x==3){rn(r,0);parts.push(`三壘跑者 ${pname(r.id)} 回本壘得分`)}else{o.bs[x+1]=r;parts.push(`${BN[x]}跑者 ${pname(r.id)} 上${BN[x+1]}`)}}cur.push({s:`↳ 投手犯規：${parts.reverse().join('，')}`})}
   else if(e.t=='tb'){if(e.pid){o.bs[e.base]={id:e.pid,p:o.pit[o.top?'h':'a'],u:true};note(`突破僵局制：${bo(e.pid)} 上${BN[e.base]}`)}else{o.bs[e.base]=null;note(`突破僵局制：清除${BN[e.base]}跑者`)}}
-  else if(e.t=='pc'){const old=o.pit[e.side],sl=o.lu[e.side].indexOf(old);o.pit[e.side]=e.pid;Q(e.pid);pitEnter(e.side,e.pid);o.pitOrder[e.side].push(e.pid);o.gone[e.side].push(old);if(sl>=0&&o.pos[e.side][sl]=='投'){o.lu[e.side][sl]=e.pid;o.hist[e.side][sl].push({pid:e.pid,tag:'',positions:[POSE[o.pos[e.side][sl]]||'']})}note(`更換投手：${pn(old)} ➡︎ ${pn(e.pid)}`)}
+  else if(e.t=='pc'){const old=o.pit[e.side],sl=o.lu[e.side].indexOf(old);o.pit[e.side]=e.pid;Q(e.pid);pitEnter(e.side,e.pid);o.pitOrder[e.side].push(e.pid);o.gone[e.side].push(old);if(sl>=0&&o.pos[e.side][sl]=='投'){o.lu[e.side][sl]=e.pid;o.hist[e.side][sl].push({pid:e.pid,tag:'',positions:[POSE[o.pos[e.side][sl]]||'']})}note(`更換投手：${pn(e.pid)} ➡︎ ${pn(old)}`)}
   else if(e.t=='dfc'){const side=e.side,chain=e.order,subs=e.subPids||(e.subPid?[e.subPid]:[]),K=chain.length,S=subs.length;
    let pendPool=[...Array(9).keys()].filter(si=>!o.pos[side][si]&&o.lu[side][si]);
    // only a REAL current occupant (or the pitcher role) counts as "existing" here — a blank slot is a
