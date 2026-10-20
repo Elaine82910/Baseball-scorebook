@@ -250,7 +250,7 @@ function calc(g){
    else{q.S++;if(k=='S'||k=='W'){if(++o.s==3)end='K'}else if(k=='Q'){if(o.s==2)end='K'}else if(o.s<2)o.s++}
    cur.push({p:1,k,s:k=='I'?`第${cur.filter(x=>x.p).length+1}球　`:`第${cur.filter(x=>x.p).length+1}球　${L[k]}${k=='X'||k=='U'||end?'':`（${o.b}-${o.s}）`}`});mk=cur[cur.length-1];if(end)pa(end,null,null,null,null,k)};
  const H=e=>{
-  if(e.t=='p'){const df0=o.top?'h':'a';Object.keys(o.pendDef[df0]).forEach(slot=>{const pid=o.lu[df0][slot],pk=POSN[o.pos[df0][slot]];if(pk){(o.deferredDef=o.deferredDef||[]).push(`更換守備：${pn(pid)} ➡︎ ${FN[pk]||''}`);if(pk==1&&o.pit[df0]!=pid){o.pit[df0]=pid;Q(pid);o.pitOrder[df0].push(pid)}const hs=o.hist[df0][slot],lastSt=hs[hs.length-1];if(lastSt)lastSt.positions.push(POSE[o.pos[df0][slot]]||'')}else{o.pendClosed[df0][slot]=true;(o.deferredDef=o.deferredDef||[]).push(`${pn(pid)} 代打／代跑未指定守備位置，視為退場`)}delete o.pendDef[df0][slot]})}
+  if(e.t=='p'){const df0=o.top?'h':'a';Object.keys(o.pendDef[df0]).forEach(slot=>{const pid=o.lu[df0][slot],pk=POSN[o.pos[df0][slot]];if(pk){(o.deferredDef=o.deferredDef||[]).push(`更換守備：${pn(pid)} ➡︎ ${FN[pk]||''}`);if(pk==1&&o.pit[df0]!=pid){o.pit[df0]=pid;Q(pid);o.pitOrder[df0].push(pid)}const hs=o.hist[df0][slot],lastSt=hs[hs.length-1];if(lastSt)lastSt.positions.push(POSE[o.pos[df0][slot]]||'')}else{o.pendClosed[df0][slot]=true}delete o.pendDef[df0][slot]})}
   if(!['tb','pc','df','sb','pr','adj'].includes(e.t))o.fresh=false;
   if(e.t=='p')pitchF(e.k);
   else if(e.t=='pa')pa(e.res,e.fp,e.rbi,e.rv,e.bt);
