@@ -556,7 +556,7 @@ const printGameLog=g=>{const o=calc(g);return `<h2>${g.date} ${g.name||''}　${T
 function printTeamCat(t,A,tab){const cols=COLS[tab],on=k=>!(S.cfg&&S.cfg[tab]&&S.cfg[tab][k]===false),vis=cols.filter(c=>on(c[0]));
  let teamOPS=0;
  if(tab=='bat'){const tt={H:0,d2:0,d3:0,HR:0,BB:0,HBP:0,SF:0,AB:0};Object.values(A.bat).forEach(x=>{tt.H+=x.H;tt.d2+=x.d2;tt.d3+=x.d3;tt.HR+=x.HR;tt.BB+=x.BB;tt.HBP+=x.HBP;tt.SF+=x.SF;tt.AB+=x.AB});const to=(tt.H+tt.BB+tt.HBP)/(tt.AB+tt.BB+tt.HBP+tt.SF),ts=(tt.H+tt.d2+2*tt.d3+3*tt.HR)/tt.AB;teamOPS=to+ts}
- const ps=t.players.filter(p=>A[tab][p.id].G>0).sort((p,q)=>(parseFloat(p.no)||0)-(parseFloat(q.no)||0)||String(p.no).localeCompare(String(q.no)));
+ const ps=sortPs(t,A,tab,cols,teamOPS);
  const rows=ps.map(p=>`<tr><td>${pn(p.id)}</td>${vis.map(c=>`<td>${c[2](A[tab][p.id],p,teamOPS)}</td>`).join('')}</tr>`).join('');
  const sumFields=tab=='bat'?['G','PA','AB','H','d2','d3','HR','RBI','SB','BB','HBP','K','SH','SF','GO','AO']:['G','GS','REL','outs','P','S','B','K','H','HR','BB','HBP','R','ER','W','L','SV','HLD','ND'];
  const plist=Object.values(A[tab]);
@@ -565,7 +565,11 @@ function printTeamCat(t,A,tab){const cols=COLS[tab],on=k=>!(S.cfg&&S.cfg[tab]&&S
  return `<h3>${t.name} ${tab=='bat'?'打擊':'投球'}</h3><table><tr><th>球員</th>${vis.map(c=>`<th>${c[1]}</th>`).join('')}</tr>${rows||'<tr><td>尚無比賽紀錄</td></tr>'}${totRow}</table>`}
 function printTeamDF(t,A){const cols=COLS.df,on=k=>!(S.cfg&&S.cfg.df&&S.cfg.df[k]===false),vis=cols.filter(c=>on(c[0]));
  const tot=pid=>{const x={G:A.df[pid].G,PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0};Object.values(A.df[pid].pos).forEach(p=>{x.PO+=p.PO;x.A+=p.A;x.E+=p.E;x.DP+=p.DP;x.PB+=p.PB;x.CS+=p.CS;x.SBA+=p.SBA});return x};
- const players=t.players.filter(p=>A.df[p.id].G>0).sort((p,q)=>(parseFloat(p.no)||0)-(parseFloat(q.no)||0)||String(p.no).localeCompare(String(q.no)));
+ let players=t.players.filter(p=>A.df[p.id].G>0);
+ const sc=cols.find(c=>c[0]==V.sk);
+ if(sc){const val=p=>{const v=sc[2](tot(p.id),p);if(typeof v=='number')return v;if(v=='-')return null;const n=parseFloat(v);return isNaN(n)?v:n},dir=V.sd=='asc'?1:-1;
+  players=players.slice().sort((p,q)=>{const a=val(p),b=val(q);if(a===null&&b===null)return 0;if(a===null)return 1;if(b===null)return -1;return(typeof a=='string'||typeof b=='string'?String(a).localeCompare(String(b),'zh'):a-b)*dir})
+ }else players=players.slice().sort((p,q)=>(parseFloat(p.no)||0)-(parseFloat(q.no)||0)||String(p.no).localeCompare(String(q.no)));
  const rows=[];
  players.forEach(p=>{
   const posEntries=Object.entries(A.df[p.id].pos).sort((a,b)=>(b[1].PO+b[1].A+b[1].E)-(a[1].PO+a[1].A+a[1].E));
