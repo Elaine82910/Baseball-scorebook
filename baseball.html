@@ -89,12 +89,12 @@ const $=i=>document.getElementById(i),uid=()=>Math.random().toString(36).slice(2
 const POSB0=['','未指定'];
 const POS=['投','捕','一壘','二壘','三壘','游擊','左外','中外','右外','指定'];
 const POSB=()=>[POSB0,...POS.map(x=>[x,x])];
-const RL={'1B':'一壘安打','IH':'內野安打','BH':'突襲短打安打','2B':'二壘安打','3B':'三壘安打','HR':'全壘打','GO':'滾地出局','FO':'飛球出局','FF':'界外飛球出局','LO':'平飛球出局','SF':'高飛犧牲打','DP':'雙殺','TP':'三殺','SH':'觸擊短打','FC':'野手選擇','E':'失誤上壘','K':'三振','BB':'四壞球','HBP':'觸身球','DK':'不死三振','CI':'妨礙打擊'};
+const RL={'1B':'一壘安打','IH':'內野安打','BH':'突襲短打安打','2B':'二壘安打','3B':'三壘安打','HR':'全壘打','GO':'滾地出局','FO':'飛球出局','FF':'界外飛球出局','LO':'平飛球出局','SF':'高飛犧牲打','DP':'雙殺','TP':'三殺','SH':'觸擊短打','FC':'野手選擇','E':'失誤上壘','K':'三振','BB':'四壞球','IBB':'故意四壞','HBP':'觸身球','DK':'不死三振','CI':'妨礙打擊'};
 const RLB={'1B':'一安','IH':'內安','BH':'短安','2B':'二安','3B':'三安','HR':'全打','GO':'滾地','FO':'高飛','FF':'界飛','LO':'平飛','SF':'犠飛','DP':'雙殺','TP':'三殺','SH':'犠短','FC':'野選','E':'失誤'};
 const DIRAB={1:'投',2:'捕',3:'一',4:'二',5:'三',6:'游',7:'左',8:'中',9:'右'};
 const BOXHIT=['一安','內安','二安','三安','全打'],BOXNA=['犠短','犠飛','四壞','觸身'];
 const boxClr=code=>{if(BOXHIT.includes(code))return 'bxhit';if(BOXNA.includes(code))return 'bxna';if(code.endsWith('滾')||code.endsWith('飛')||code=='野選'||code=='雙殺'||code=='三殺'||code=='見振'||code=='空振'||code=='不死')return 'bxout';if(code.endsWith('誤'))return 'bxerr';return ''};
-const abbr=(res,fs,ctx)=>{ctx=ctx||{};const d=fs&&fs.length?DIRAB[fs[0]]||'':'';switch(res){case '1B':return '一安';case 'IH':case 'BH':return '內安';case '2B':return '二安';case '3B':return '三安';case 'HR':return '全打';case 'BB':return '四壞';case 'HBP':return '觸身';case 'CI':return '礙打';case 'K':return ctx.kind=='Q'?'三振':(ctx.kind=='W'?'空振':'見振');case 'DK':return '不死';case 'DP':return '雙殺';case 'TP':return '三殺';case 'FC':return '野選';case 'E':return d+'誤';case 'GO':return d+'滾';case 'FO':return d+'飛';case 'FF':return '界飛';case 'LO':return d+'飛';case 'SF':return '犧飛';case 'SH':return ctx.sh||'犠短';default:return RL[res]||res}};
+const abbr=(res,fs,ctx)=>{ctx=ctx||{};const d=fs&&fs.length?DIRAB[fs[0]]||'':'';switch(res){case '1B':return '一安';case 'IH':case 'BH':return '內安';case '2B':return '二安';case '3B':return '三安';case 'HR':return '全打';case 'BB':return '四壞';case 'IBB':return '故四';case 'HBP':return '觸身';case 'CI':return '礙打';case 'K':return ctx.kind=='Q'?'三振':(ctx.kind=='W'?'空振':'見振');case 'DK':return '不死';case 'DP':return '雙殺';case 'TP':return '三殺';case 'FC':return '野選';case 'E':return d+'誤';case 'GO':return d+'滾';case 'FO':return d+'飛';case 'FF':return '界飛';case 'LO':return d+'飛';case 'SF':return '犧飛';case 'SH':return ctx.sh||'犠短';default:return RL[res]||res}};
 const FN={1:'投手',2:'捕手',3:'一壘手',4:'二壘手',5:'三壘手',6:'游擊手',7:'左外野手',8:'中外野手',9:'右外野手'},SN={1:'投',2:'捕',3:'一',4:'二',5:'三',6:'游',7:'左',8:'中',9:'右'},FP={8:[50,10],7:[15,26],9:[85,26],6:[34,46],4:[66,46],5:[17,68],3:[83,68],1:[50,62],2:[50,90]};
 const POSN={'投':1,'捕':2,'一壘':3,'二壘':4,'三壘':5,'游擊':6,'左外':7,'中外':8,'右外':9};
 const POSNAME=Object.fromEntries(Object.entries(POSN).map(([k,v])=>[v,k]));
@@ -129,8 +129,8 @@ const tot=(o,s)=>o.sc[s].reduce((x,y)=>x+(y||0),0);
 /* ===== 比賽引擎：由事件序列重播出全部狀態 ===== */
 function calc(g){
  const o={in:1,top:true,outs:0,b:0,s:0,bs:[null,null,null,null],bi:{a:0,h:0},sc:{a:[],h:[]},H:{a:0,h:0},E:{a:0,h:0},lu:{a:g.lu.a.map(x=>x.p),h:g.lu.h.map(x=>x.p)},pos:{a:g.lu.a.map(x=>x.pos),h:g.lu.h.map(x=>x.pos)},gone:{a:[],h:[]},fresh:true,fd:{},pit:{},bat:{},pt:{},log:[],lead:[]};
- const B=id=>o.bat[id]||(o.bat[id]={PA:0,AB:0,H:0,d2:0,d3:0,HR:0,RBI:0,SB:0,BB:0,HBP:0,K:0,SF:0,SH:0,GO:0,AO:0});
- const Q=id=>o.pt[id]||(o.pt[id]={outs:0,P:0,S:0,B:0,K:0,BB:0,HBP:0,H:0,HR:0,WP:0,BK:0,R:0,ER:0,BF:0,GS:0,REL:0,SV:0,HLD:0});
+ const B=id=>o.bat[id]||(o.bat[id]={PA:0,AB:0,H:0,d2:0,d3:0,HR:0,RBI:0,SB:0,BB:0,IBB:0,HBP:0,K:0,SF:0,SH:0,GO:0,AO:0});
+ const Q=id=>o.pt[id]||(o.pt[id]={outs:0,P:0,S:0,B:0,K:0,BB:0,IBB:0,HBP:0,H:0,HR:0,WP:0,BK:0,R:0,ER:0,BF:0,GS:0,REL:0,SV:0,HLD:0});
  const pitEnter=(sd,pid)=>{if(!pid)return;o.pitEntry=o.pitEntry||{a:{},h:{}};if(o.pitEntry[sd][pid])return;o.pitEntry[sd][pid]={lead:tot(o,sd)-tot(o,sd=='a'?'h':'a'),runners:[1,2,3].filter(x=>o.bs[x]).length}};
  o.hist={a:[],h:[]};o.pitOrder={a:[],h:[]};o.box=[];o.pendDef={a:{},h:{}};o.pendDHCancel={a:{},h:{}};o.pendClosed={a:{},h:{}};o.collideN=0;o.lastPA=null;
  ['a','h'].forEach(s=>{o.pit[s]=(g.sp&&g.sp[s])||(g.lu[s].find(x=>x.pos=='投')||g.lu[s][0]).p;Q(o.pit[s]);pitEnter(s,o.pit[s]);o.pitOrder[s].push(o.pit[s]);o.hist[s]=g.lu[s].map((x,i)=>[{pid:x.p,tag:'',positions:[POSE[o.pos[s][i]]||'']}])});
@@ -160,7 +160,7 @@ function calc(g){
   return p.filter(Boolean).join('，')};
  const pa=(res,fp,rbi,rv,bt,pk3)=>{if(['FO','LO','FF'].includes(res)&&rv&&rv[3]==4)res='SF';
   const s=o.top?'a':'h',d=o.top?'h':'a',slotIdx=o.bi[s]%9,id=o.lu[s][slotIdx],pi=o.pit[d],b=B(id),q=Q(pi),bs=o.bs,inn=o.in,tp=o.top;cb=b;const oc0=oc;man=rbi!=null;let shRes='',boxCode='',fcRes='';const fp0=fp?[].concat(fp):[],fdir=typeof fp0[0]=='string'?fp0[0]:null,fs=fdir?fp0.slice(1):fp0;fdirTxt=fdir?(FDN[fdir]||''):'';bnameTxt=pname(id);if(fs.length){const dsp=fs.filter((v,i)=>v!==fs[i-1]);const l=cur[cur.length-1],t=`【${dsp.join('-')}】`;if(l&&l.k=='X')l.s+=t;else cur.push({s:t})}
-  const nb={id,p:pi,u:res=='E'};b.PA++;q.BF++;if(res=='GO'||res=='DP')b.GO++;if(['FO','FF','LO','SF'].includes(res))b.AO++;if(!['BB','HBP','SF','SH','CI'].includes(res))b.AB++;
+  const nb={id,p:pi,u:res=='E'};b.PA++;q.BF++;if(res=='GO'||res=='DP')b.GO++;if(['FO','FF','LO','SF'].includes(res))b.AO++;if(!['BB','IBB','HBP','SF','SH','CI'].includes(res))b.AB++;
   const hit=n=>{b.H++;o.H[s]++;q.H++;if(n==2)b.d2++;if(n==3)b.d3++;if(n==4)b.HR++;mv(n,1);if(n==4)rn(nb,1);else bs[n]=nb};
   if(rv){
    const mo=[0,0,0,0],sc=[],ou=[],rp=[],nm=['','一壘','二壘','三壘'],info={},rname={};
@@ -220,7 +220,7 @@ function calc(g){
     const nt=narr(res,fs,rp,hb,rv,bt);if(nt){cur.push({s:nt});mk=cur[cur.length-1]}
    }
   }else if(['1B','IH','BH'].includes(res))hit(1);else if(res=='2B')hit(2);else if(res=='3B')hit(3);else if(res=='HR')hit(4);
-  else if(res=='BB'||res=='HBP'||res=='CI'){const r1=bs[1],r2=bs[2],r3=bs[3];if(res=='BB'){b.BB++;q.BB++}else if(res=='HBP'){b.HBP++;q.HBP++}if(bs[1]){if(bs[2]){if(bs[3])rn(bs[3],1);bs[3]=bs[2]}bs[2]=bs[1]}bs[1]=nb;
+  else if(res=='BB'||res=='IBB'||res=='HBP'||res=='CI'){const r1=bs[1],r2=bs[2],r3=bs[3];if(res=='BB'||res=='IBB'){b.BB++;q.BB++;if(res=='IBB'){b.IBB++;q.IBB++}}else if(res=='HBP'){b.HBP++;q.HBP++}if(bs[1]){if(bs[2]){if(bs[3])rn(bs[3],1);bs[3]=bs[2]}bs[2]=bs[1]}bs[1]=nb;
    const moveTxt=[`打者 ${pname(id)} 上一壘`];if(r1){moveTxt.push(`一壘跑者 ${pname(r1.id)} 上二壘`);if(r2){moveTxt.push(`二壘跑者 ${pname(r2.id)} 上三壘`);if(r3)moveTxt.push(`三壘跑者 ${pname(r3.id)} 回本壘得分`)}}
    cur.push({s:moveTxt.join('，')});
    const nm2={1:'一',2:'二',3:'三'},occ=[1,2,3].filter(x=>bs[x]).map(x=>nm2[x]);if(occ.length)cur.push({s:occ.join('、')+'壘有人'});
@@ -254,6 +254,7 @@ function calc(g){
   if(!['tb','pc','df','sb','pr','adj'].includes(e.t))o.fresh=false;
   if(e.t=='p')pitchF(e.k);
   else if(e.t=='pa')pa(e.res,e.fp,e.rbi,e.rv,e.bt);
+  else if(e.t=='ibb'){cur.push({s:`第${cur.filter(x=>x.p).length+1}球　故意四壞球上壘`});mk=cur[cur.length-1];pa('IBB')}
   else if(e.t=='r'){const r=o.bs[e.base];if(!r)return;if(e.pk){pitchF(e.pk);if(o.bs[e.base]!==r)return}cb=null;const s0=o.top?'a':'h',d0=o.top?'h':'a',bid=o.lu[s0][o.bi[s0]%9],inn=o.in,tp=o.top,pi=o.pit[d0],isO=OUT.includes(e.act),to=e.to&&e.act=='SB'&&e.base<3;
    const ad=e.act=='adv',pordTxt=e.act=='PORD'?`投手牽制${BN[e.base]}，${(e.seq||[]).map(k=>FN[k]).join(' 傳向 ')} 觸殺出局`:null;const nested=(ad||e.act=='out')&&o.b==0&&o.s==0&&o.lastPA;const advText=`↳ ${BN[e.base]}跑者 ${pname(r.id)} ${ad?(e.base==3?'趁傳回本壘得分':`趁傳上${BN[e.base+1]}`):(pordTxt||RN[e.act])}${to?'，離壘被觸殺出局':''}${!isO&&!ad&&e.base==3?'（得分）':''}`;o.bs[e.base]=null;{const cc=fid(d0,2);if(cc){if(e.act=='CS')F(cc,2).CS++;else if(e.act=='SB')F(cc,2).SBA++}}if(e.act=='PORD'&&e.seq&&e.seq.length){e.seq.forEach((k,i)=>{const fpid=fid(d0,k);if(fpid){const f=F(fpid,k);if(i<e.seq.length-1)f.A++;else f.PO++}})}if(e.act=='PO'&&e.fk){const pid1=fid(d0,1);if(pid1)F(pid1,1).A++;const fpid=fid(d0,e.fk);if(fpid)F(fpid,e.fk).PO++}
    if(isO||to){if(to)B(r.id).SB++;const ended=out();const cntTxt=`，${['','一','兩','三'][o.lo]}人出局`;
@@ -560,7 +561,7 @@ function printTeamCat(t,A,tab){const cols=COLS[tab],on=k=>!(S.cfg&&S.cfg[tab]&&S
  if(tab=='bat'){const tt={H:0,d2:0,d3:0,HR:0,BB:0,HBP:0,SF:0,AB:0};Object.values(A.bat).forEach(x=>{tt.H+=x.H;tt.d2+=x.d2;tt.d3+=x.d3;tt.HR+=x.HR;tt.BB+=x.BB;tt.HBP+=x.HBP;tt.SF+=x.SF;tt.AB+=x.AB});const to=(tt.H+tt.BB+tt.HBP)/(tt.AB+tt.BB+tt.HBP+tt.SF),ts=(tt.H+tt.d2+2*tt.d3+3*tt.HR)/tt.AB;teamOPS=to+ts}
  const ps=sortPs(t,A,tab,cols,teamOPS);
  const rows=ps.map(p=>`<tr><td>${pn(p.id)}</td>${vis.map(c=>`<td>${c[2](A[tab][p.id],p,teamOPS)}</td>`).join('')}</tr>`).join('');
- const sumFields=tab=='bat'?['G','PA','AB','H','d2','d3','HR','RBI','SB','BB','HBP','K','SH','SF','GO','AO']:['G','GS','REL','outs','P','S','B','K','H','HR','BB','HBP','WP','BK','R','ER','W','L','SV','HLD','ND'];
+ const sumFields=tab=='bat'?['G','PA','AB','H','d2','d3','HR','RBI','SB','BB','IBB','HBP','K','SH','SF','GO','AO']:['G','GS','REL','outs','P','S','B','K','H','HR','BB','IBB','HBP','WP','BK','R','ER','W','L','SV','HLD','ND'];
  const plist=Object.values(A[tab]);
  const tot={};sumFields.forEach(f=>tot[f]=0);plist.forEach(x=>sumFields.forEach(f=>tot[f]+=x[f]||0));tot.G=A.teamG||0;
  const totRow=plist.length?`<tr style="font-weight:700"><td>球隊總計</td>${vis.map(c=>`<td>${c[2](tot,null,teamOPS)}</td>`).join('')}</tr>`:'';
@@ -712,17 +713,17 @@ const sub=k=>{const g=G(),o=calc(g),bt=o.top?'a':'h',df=o.top?'h':'a',v=$(k=='p'
 const f3=n=>isFinite(n)?n.toFixed(3):'-',f2=n=>isFinite(n)?n.toFixed(2):'-';
 const obp=x=>(x.H+x.BB+x.HBP)/(x.AB+x.BB+x.HBP+x.SF),slg=x=>(x.H+x.d2+2*x.d3+3*x.HR)/x.AB;
 const COLS={
- bat:[['G','場次',x=>x.G],['PA','打席',x=>x.PA],['AB','打數',x=>x.AB],['H','安打',x=>x.H],['H1','一安',x=>x.H-x.d2-x.d3-x.HR],['H2','二安',x=>x.d2],['H3','三安',x=>x.d3],['HR','全壘打',x=>x.HR],['XBH','長打',x=>x.d2+x.d3+x.HR],['RBI','打點',x=>x.RBI],['SB','盜壘',x=>x.SB],['BB','四死',x=>x.BB+x.HBP],['K','被三振',x=>x.K],['SH','犠短',x=>x.SH],['SF','犠飛',x=>x.SF],['AVG','打擊率',x=>f3(x.H/x.AB)],['OBP','上壘率',x=>f3(obp(x))],['SLG','長打率',x=>f3(slg(x))],['OPS','OPS',x=>f3(obp(x)+slg(x))],['OPSp','OPS+',(x,p,teamOPS)=>{const o=obp(x)+slg(x);return isFinite(o)&&teamOPS?Math.round(o/teamOPS*100):'-'}],['GAO','滾飛出局比',x=>f2(x.GO/x.AO)],['BBK','保送三振比',x=>f2(x.BB/x.K)]],
+ bat:[['G','場次',x=>x.G],['PA','打席',x=>x.PA],['AB','打數',x=>x.AB],['H','安打',x=>x.H],['H1','一安',x=>x.H-x.d2-x.d3-x.HR],['H2','二安',x=>x.d2],['H3','三安',x=>x.d3],['HR','全壘打',x=>x.HR],['XBH','長打',x=>x.d2+x.d3+x.HR],['RBI','打點',x=>x.RBI],['SB','盜壘',x=>x.SB],['BB','四壞',x=>x.BB],['IBB','（故四）',x=>'('+(x.IBB||0)+')'],['HBP','觸身',x=>x.HBP],['K','被三振',x=>x.K],['SH','犠短',x=>x.SH],['SF','犠飛',x=>x.SF],['AVG','打擊率',x=>f3(x.H/x.AB)],['OBP','上壘率',x=>f3(obp(x))],['SLG','長打率',x=>f3(slg(x))],['OPS','OPS',x=>f3(obp(x)+slg(x))],['OPSp','OPS+',(x,p,teamOPS)=>{const o=obp(x)+slg(x);return isFinite(o)&&teamOPS?Math.round(o/teamOPS*100):'-'}],['GAO','滾飛出局比',x=>f2(x.GO/x.AO)],['BBK','保送三振比',x=>f2(x.BB/x.K)]],
  df:[['G','場次',x=>x.G],['FP','守備率',x=>f3((x.PO+x.A)/(x.PO+x.A+x.E))],['TC','守備機會',x=>x.PO+x.A+x.E],['E','失誤',x=>x.E],['PO','刺殺',x=>x.PO],['A','助殺',x=>x.A],['DP','雙殺',x=>x.DP],['PB','捕逸',x=>x.PB],['CS','阻殺',x=>x.CS],['SBA','被盜成功',x=>x.SBA]],
- pt:[['G','場次',x=>x.G],['GS','先發',x=>x.GS],['REL','後援',x=>x.REL],['IP','局數',x=>Math.floor(x.outs/3)+'.'+x.outs%3],['P','用球',x=>x.P],['S','好球',x=>x.S],['B','壞球',x=>x.B],['K','奪三振',x=>x.K],['H','被安打',x=>x.H],['HR','被全壘打',x=>x.HR],['BB','四壞',x=>x.BB],['HBP','觸身',x=>x.HBP],['WP','暴投',x=>x.WP],['BK','犯規',x=>x.BK],['R','失分',x=>x.R],['ER','自責',x=>x.ER],['UER','非自責',x=>x.R-x.ER],['W','勝',x=>x.W],['L','敗',x=>x.L],['SV','救援成功',x=>x.SV],['HLD','中繼成功',x=>x.HLD],['ND','無關勝敗',x=>x.ND],['ERA','ERA',x=>f2(x.ER*27/x.outs)],['WHIP','WHIP',x=>f2((x.BB+x.H)*3/x.outs)],['K9','K9',x=>f2(x.K*27/x.outs)]]};
+ pt:[['G','場次',x=>x.G],['GS','先發',x=>x.GS],['REL','後援',x=>x.REL],['IP','局數',x=>Math.floor(x.outs/3)+'.'+x.outs%3],['P','用球',x=>x.P],['S','好球',x=>x.S],['B','壞球',x=>x.B],['K','奪三振',x=>x.K],['H','被安打',x=>x.H],['HR','被全壘打',x=>x.HR],['BB','四壞',x=>x.BB],['IBB','（故四）',x=>'('+(x.IBB||0)+')'],['HBP','觸身',x=>x.HBP],['WP','暴投',x=>x.WP],['BK','犯規',x=>x.BK],['R','失分',x=>x.R],['ER','自責',x=>x.ER],['UER','非自責',x=>x.R-x.ER],['W','勝',x=>x.W],['L','敗',x=>x.L],['SV','救援成功',x=>x.SV],['HLD','中繼成功',x=>x.HLD],['ND','無關勝敗',x=>x.ND],['ERA','ERA',x=>f2(x.ER*27/x.outs)],['WHIP','WHIP',x=>f2((x.BB+x.H)*3/x.outs)],['K9','K9',x=>f2(x.K*27/x.outs)]]};
 function agg(tid,rng,upto){const t=T(tid),r={bat:{},df:{},pt:{}},ui=upto?S.games.indexOf(upto):-1,upOK=g=>{if(!upto||g===upto)return true;const dx=g.date||'',du=upto.date||'';return dx!==du?dx<du:S.games.indexOf(g)>ui},inR=g=>{if(!upOK(g))return false;if(!rng)return true;const d=g.date||'';if(rng.from&&(!d||d<rng.from))return false;if(rng.to&&(!d||d>rng.to))return false;return true};
- t.players.forEach(p=>{r.bat[p.id]={G:0,PA:0,AB:0,H:0,d2:0,d3:0,HR:0,RBI:0,SB:0,BB:0,HBP:0,K:0,SF:0,SH:0,GO:0,AO:0};r.df[p.id]={G:0,pos:{}};r.pt[p.id]={G:0,outs:0,P:0,S:0,B:0,K:0,BB:0,HBP:0,H:0,HR:0,WP:0,BK:0,R:0,ER:0,BF:0,W:0,L:0,ND:0,GS:0,REL:0,SV:0,HLD:0}});
+ t.players.forEach(p=>{r.bat[p.id]={G:0,PA:0,AB:0,H:0,d2:0,d3:0,HR:0,RBI:0,SB:0,BB:0,IBB:0,HBP:0,K:0,SF:0,SH:0,GO:0,AO:0};r.df[p.id]={G:0,pos:{}};r.pt[p.id]={G:0,outs:0,P:0,S:0,B:0,K:0,BB:0,IBB:0,HBP:0,H:0,HR:0,WP:0,BK:0,R:0,ER:0,BF:0,W:0,L:0,ND:0,GS:0,REL:0,SV:0,HLD:0}});
  let teamG=0;
  S.games.filter(g=>(g.a==tid||g.h==tid)&&inR(g)).forEach(g=>{if(g.lu.a.some(x=>!x.p)||g.lu.h.some(x=>!x.p))return;let s,o;try{s=g.a==tid?'a':'h';o=calc(g);teamG++}catch(e){console.error('game skipped in agg',g.id,e);return}
   t.players.forEach(p=>{const id=p.id,b=o.bat[id],inLu=g.lu[s].some(x=>x.p==id);
    if(b||inLu){const a=r.bat[id];a.G++;if(b)for(const k in b)a[k]+=b[k]}
    const fdKeys=Object.keys(o.fd).filter(k=>o.fd[k].pid==id);if(fdKeys.length||inLu||o.gone[s].includes(id)||o.pit[s]==id){const a=r.df[id];a.G++;fdKeys.forEach(k=>{const f=o.fd[k],pe=POSE[POSNAME[f.pk]]||'?';const bkt=a.pos[pe]=a.pos[pe]||{PO:0,A:0,E:0,DP:0,PB:0,CS:0,SBA:0};['PO','A','E','DP','PB','CS','SBA'].forEach(kk=>bkt[kk]+=f[kk])})}
-   const q=o.pt[id];if(q){const a=r.pt[id];a.G++;['outs','P','S','B','K','BB','HBP','H','HR','WP','BK','R','ER','BF','GS','REL','SV','HLD'].forEach(k=>a[k]+=q[k]||0);if(g.fin||o.over){if(q.W)a.W++;else if(q.L)a.L++;else a.ND++}}})});
+   const q=o.pt[id];if(q){const a=r.pt[id];a.G++;['outs','P','S','B','K','BB','IBB','HBP','H','HR','WP','BK','R','ER','BF','GS','REL','SV','HLD'].forEach(k=>a[k]+=q[k]||0);if(g.fin||o.over){if(q.W)a.W++;else if(q.L)a.L++;else a.ND++}}})});
  r.teamG=teamG;
  return r}
 const togCol=(tab,k)=>{S.cfg=S.cfg||{};S.cfg[tab]=S.cfg[tab]||{};S.cfg[tab][k]=S.cfg[tab][k]===false;R()};
@@ -760,7 +761,7 @@ function teamStats(t){const A=agg(t.id,(S.dr&&S.dr[t.id])||null),tab=V.cst||'bat
  let teamOPS=0;
  if(tab=='bat'){const tt={H:0,d2:0,d3:0,HR:0,BB:0,HBP:0,SF:0,AB:0};Object.values(A.bat).forEach(x=>{tt.H+=x.H;tt.d2+=x.d2;tt.d3+=x.d3;tt.HR+=x.HR;tt.BB+=x.BB;tt.HBP+=x.HBP;tt.SF+=x.SF;tt.AB+=x.AB});const to=(tt.H+tt.BB+tt.HBP)/(tt.AB+tt.BB+tt.HBP+tt.SF),ts=(tt.H+tt.d2+2*tt.d3+3*tt.HR)/tt.AB;teamOPS=to+ts}
  const rows=sortPs(t,A,tab,cols,teamOPS).map(p=>`<tr><td style="${stk(0,70)}">${pn(p.id)}</td>${vis.map(c=>`<td>${c[2](A[tab][p.id],p,teamOPS)}</td>`).join('')}</tr>`).join('');
- const sumFields=tab=='bat'?['G','PA','AB','H','d2','d3','HR','RBI','SB','BB','HBP','K','SH','SF','GO','AO']:['G','GS','REL','outs','P','S','B','K','H','HR','BB','HBP','WP','BK','R','ER','W','L','SV','HLD','ND'];
+ const sumFields=tab=='bat'?['G','PA','AB','H','d2','d3','HR','RBI','SB','BB','IBB','HBP','K','SH','SF','GO','AO']:['G','GS','REL','outs','P','S','B','K','H','HR','BB','IBB','HBP','WP','BK','R','ER','W','L','SV','HLD','ND'];
  const plist=Object.values(A[tab]);
  const tot={};sumFields.forEach(f=>tot[f]=0);plist.forEach(x=>sumFields.forEach(f=>tot[f]+=x[f]||0));tot.G=A.teamG||0;
  const totRow=plist.length?`<tr style="font-weight:700"><td style="${stk(0,70)}">球隊總計</td>${vis.map(c=>`<td>${c[2](tot,null,teamOPS)}</td>`).join('')}</tr>`:'';
@@ -813,7 +814,7 @@ function rec(g,o){const bt=o.top?'a':'h',df=o.top?'h':'a',bi=o.bi[bt]%9;
  ${[1,2,3].filter(x=>o.bs[x]).map(x=>`<div class=c><b>${x}壘 ${pn(o.bs[x].id)}</b> ${btn('盜壘',`run(${x},'SB')`)}${btn('牽制',`pkStart(${x})`)}${btn('進壘',`V.adv={base:${x},st:1};R()`)}${btn('出局',`run(${x},'out')`)}</div>`).join('')}
  <div class=c><b>本打席逐球</b><div class=sy>${o.cur.filter(x=>x.p).map(x=>PIC(x.k)||SY[x.k]||'').join('')||'<span class=syph>（尚未投球）</span>'}</div><div class=lgd>${[['B','壞球'],['S','好球'],['W','揮空'],['F','界外']].map(([k,t])=>`<span class=lgi>${PIC(k,14)}<span>${t}</span></span>`).join('')}</div></div>
  <div class="g g3">${btn('壞球',"pitch('B')")}${btn('好球',"pitch('S')")}${btn('揮空',"pitch('W')")}</div>
- <div class="g g3">${btn('界外',"pitch('F')")}${btn('觸身',"pitch('H')")}${btn('妨礙打擊',"pitch('I')")}<button class=b ${(o.s<2||(o.bs[1]&&o.outs<2))?'disabled':''} onclick="playDK()">不死</button><button class=b ${o.s==2?'':'disabled'} onclick="pitch('Q')">觸擊失敗</button>${hr?`${btn('暴投',"wpStart('WP')")}${btn('捕逸',"wpStart('PB')")}${btn('犯規',"push({t:'bk'})")}${[1,2,3].filter(x=>o.bs[x]).length==2?btn('雙盜壘',"dsStart()"):''}`:''}</div>
+ <div class="g g3">${btn('界外',"pitch('F')")}${btn('觸身',"pitch('H')")}${btn('妨礙打擊',"pitch('I')")}<button class=b ${(o.s<2||(o.bs[1]&&o.outs<2))?'disabled':''} onclick="playDK()">不死</button><button class=b ${o.s==2?'':'disabled'} onclick="pitch('Q')">觸擊失敗</button>${btn('故意四壞',"push({t:'ibb'})")}${hr?`${btn('暴投',"wpStart('WP')")}${btn('捕逸',"wpStart('PB')")}${btn('犯規',"push({t:'bk'})")}${[1,2,3].filter(x=>o.bs[x]).length==2?btn('雙盜壘',"dsStart()"):''}`:''}</div>
  <b>擊球結果</b>
  <div class="g g3">${[['IH','bhit'],['GO','bout'],['DP','bout'],['1B','bhit'],['LO','bout'],['TP','bout'],['2B','bhit'],['FO','bout'],['SH','bsac'],['3B','bhit'],['FF','bout'],['SF','bsac'],['HR','bhit'],['FC','bout'],['E','berr']].map(([k,cls])=>`<button class="b ${cls}" ${((k=='DP')&&o.outs>=2)||((k=='FC'||k=='DP')&&!hr)||(k=='TP'&&(o.outs>0||[1,2,3].filter(x=>o.bs[x]).length<2))||(k=='SF'&&!(o.outs<2&&o.bs[3]))||(k=='SH'&&!hr)?'disabled':''} onclick="play('${k}')">${RLB[k]}</button>`).join('')}</div>
  <div class=c><div class=row>${btn('更換守備',"V.mod='def';V.mk=0;V.rot=[];V.subPids=[];R()")}${btn('更換跑壘者',"V.mod='run';V.mk=0;R()")}</div><div class=row>更換代打 <select id=sh>${sl(bt,true)}</select>${btn('確定',"sub('h')")}</div></div>
@@ -853,13 +854,13 @@ function statsBP(g,o,side,cats){const f=(n,d=3)=>isFinite(n)?n.toFixed(d):'-';ca
     const b=o.bat[st.pid]||{PA:0,AB:0,H:0,d2:0,d3:0,HR:0,RBI:0,SB:0,BB:0,HBP:0,K:0,SF:0,SH:0};
     const cb=A.bat[st.pid]||b,cobp=(cb.H+cb.BB+cb.HBP)/(cb.AB+cb.BB+cb.HBP+cb.SF),cslg=(cb.H+cb.d2+2*cb.d3+3*cb.HR)/cb.AB;
     const posLines=[st.tag=='DEF'?`(${st.positions[0]})`:(st.tag?`(${st.tag})`:st.positions[0]),...st.positions.slice(1).map(p=>`(${p})`)].filter(Boolean).join('<br>');
-    rows.push(`<tr><td style="${stk(0,22)}">${si==0?slot+1:''}</td><td style="${stk(22,60)}">${nm(st.pid)}</td><td class=pcell style="${stk(82,40)}">${posLines}</td><td>${b.PA}</td><td>${b.AB}</td><td>${b.H}</td><td>${b.H-b.d2-b.d3-b.HR}</td><td>${b.d2}</td><td>${b.d3}</td><td>${b.HR}</td><td>${b.RBI}</td><td>${b.SB}</td><td>${b.BB+b.HBP}</td><td>${b.K}</td><td>${b.SH}</td><td>${b.SF}</td><td>${f(cb.H/cb.AB)}</td><td>${f(cobp+cslg)}</td></tr>`)
+    rows.push(`<tr><td style="${stk(0,22)}">${si==0?slot+1:''}</td><td style="${stk(22,60)}">${nm(st.pid)}</td><td class=pcell style="${stk(82,40)}">${posLines}</td><td>${b.PA}</td><td>${b.AB}</td><td>${b.H}</td><td>${b.H-b.d2-b.d3-b.HR}</td><td>${b.d2}</td><td>${b.d3}</td><td>${b.HR}</td><td>${b.RBI}</td><td>${b.SB}</td><td>${b.BB}</td><td>(${b.IBB||0})</td><td>${b.HBP}</td><td>${b.K}</td><td>${b.SH}</td><td>${b.SF}</td><td>${f(cb.H/cb.AB)}</td><td>${f(cobp+cslg)}</td></tr>`)
    })
   }
   const pt=o.pitOrder[s].map(pid=>{const q=o.pt[pid],c=A.pt[pid]||q;
-   return `<tr><td style="${stk(0,70)}">${nm(pid)}</td><td>${Math.floor(q.outs/3)}.${q.outs%3}</td><td>${q.BF}</td><td>${q.P}</td><td>${q.S}</td><td>${q.B}</td><td>${q.K}</td><td>${q.H}</td><td>${q.HR||0}</td><td>${q.BB}</td><td>${q.HBP}</td><td>${q.WP||0}</td><td>${q.BK||0}</td><td>${q.R}</td><td>${q.ER}</td><td>${q.R-q.ER}</td><td>${(g.fin||o.over)?(q.W?'勝':q.L?'敗':'無關'):'-'}</td><td>${f(c.ER*27/c.outs,2)}</td><td>${f((c.BB+c.H)*3/c.outs,2)}</td></tr>`}).join('');
-  return `<div class=c>${cats.includes('bat')?`<h3>${t.name} 打擊</h3><div class=sc><table><tr><th style="${stk(0,22)}"></th><th style="${stk(22,60)}">球員</th><th style="${stk(82,40)}">守位</th><th>打席</th><th>打數</th><th>安打</th><th>一安</th><th>二安</th><th>三安</th><th>全壘打</th><th>打點</th><th>盜壘</th><th>四死</th><th>被三振</th><th>犠短</th><th>犠飛</th><th>打擊率</th><th>OPS</th></tr>${rows.join('')}</table></div>`:''}
-  ${cats.includes('pt')?`<h3>${t.name} 投手</h3><div class=sc><table><tr><th style="${stk(0,70)}"></th><th>局數</th><th>面對打席</th><th>用球</th><th>好球</th><th>壞球</th><th>奪三振</th><th>被安打</th><th>被全壘打</th><th>四壞</th><th>觸身</th><th>暴投</th><th>犯規</th><th>失分</th><th>自責</th><th>非自責</th><th>勝敗</th><th>ERA</th><th>WHIP</th></tr>${pt}</table></div>`:''}</div>`}).join('')}
+   return `<tr><td style="${stk(0,70)}">${nm(pid)}</td><td>${Math.floor(q.outs/3)}.${q.outs%3}</td><td>${q.BF}</td><td>${q.P}</td><td>${q.S}</td><td>${q.B}</td><td>${q.K}</td><td>${q.H}</td><td>${q.HR||0}</td><td>${q.BB}</td><td>(${q.IBB||0})</td><td>${q.HBP}</td><td>${q.WP||0}</td><td>${q.BK||0}</td><td>${q.R}</td><td>${q.ER}</td><td>${q.R-q.ER}</td><td>${(g.fin||o.over)?(q.W?'勝':q.L?'敗':'無關'):'-'}</td><td>${f(c.ER*27/c.outs,2)}</td><td>${f((c.BB+c.H)*3/c.outs,2)}</td></tr>`}).join('');
+  return `<div class=c>${cats.includes('bat')?`<h3>${t.name} 打擊</h3><div class=sc><table><tr><th style="${stk(0,22)}"></th><th style="${stk(22,60)}">球員</th><th style="${stk(82,40)}">守位</th><th>打席</th><th>打數</th><th>安打</th><th>一安</th><th>二安</th><th>三安</th><th>全壘打</th><th>打點</th><th>盜壘</th><th>四壞</th><th>（故四）</th><th>觸身</th><th>被三振</th><th>犠短</th><th>犠飛</th><th>打擊率</th><th>OPS</th></tr>${rows.join('')}</table></div>`:''}
+  ${cats.includes('pt')?`<h3>${t.name} 投手</h3><div class=sc><table><tr><th style="${stk(0,70)}"></th><th>局數</th><th>面對打席</th><th>用球</th><th>好球</th><th>壞球</th><th>奪三振</th><th>被安打</th><th>被全壘打</th><th>四壞</th><th>（故四）</th><th>觸身</th><th>暴投</th><th>犯規</th><th>失分</th><th>自責</th><th>非自責</th><th>勝敗</th><th>ERA</th><th>WHIP</th></tr>${pt}</table></div>`:''}</div>`}).join('')}
 const LP={t:null,f:false,x:0,y:0};
 const lpCancel=()=>{clearTimeout(LP.t);LP.t=null};
 document.addEventListener('pointerdown',e=>{LP.f=false;lpCancel();const b=e.target.closest&&e.target.closest('[data-lp]');if(!b)return;LP.x=e.clientX;LP.y=e.clientY;LP.t=setTimeout(()=>{LP.t=null;LP.f=true;if(navigator.vibrate)try{navigator.vibrate(30)}catch(_){}if(b.dataset.lpact=='edl')startEditLog(b.dataset.lp);else delG(b.dataset.lp)},600)},true);
