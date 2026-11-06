@@ -22,7 +22,7 @@
   });
   if('serviceWorker' in navigator){
     window.addEventListener('load', function(){
-      // 正式架設時（旁邊有 sw.js）才會註冊成功；單獨開啟這個檔案時會失敗，直接忽略即可。
+      // 正式架設時（旁邊有 sw.js）才會註冊成功；單獨開啟這個檔案時會失敗。
       navigator.serviceWorker.register('sw.js').catch(function(){});
     });
   }
