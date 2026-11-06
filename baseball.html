@@ -989,10 +989,14 @@ function vR(){
  const g=G(),y=window.scrollY;
  if(!g){$('app').innerHTML=`<div class=c>${V.verr||'載入中…'}</div>`;return}
  const o=calc(g);
- const live=o.over?'比賽結束':`${o.in}局${o.top?'上':'下'}　${o.b}壞 ${o.s}好 ${o.outs}出局`;
- let body=V.sub=='bx'?boxTable(g,o):V.sub=='rec'?board(g,o)+`<div class="c live"><div>${bases(o,false)}</div><div><b>${live}</b></div></div>`:V.sub=='log'?recLog(g,o):stats(g,o).replace(/<span style="margin-left:auto"><button[^>]*>🔧<\/button><\/span>/,'');
+  let body=V.sub=='bx'?boxTable(g,o):V.sub=='rec'?vBoard(g,o):V.sub=='log'?recLog(g,o):stats(g,o).replace(/<span style="margin-left:auto"><button[^>]*>🔧<\/button><\/span>/,'');
  $('app').innerHTML=`<div class=row><b>${g.date} ${g.name||''}</b><span style="margin-left:auto;font-size:11px;opacity:.6">唯讀${V.vt?'　更新 '+V.vt:''}</span></div><nav>${[['bx','簡報'],['rec','計分板'],['log','逐打席'],['st','成績表']].map(([k,l])=>btn(l,`V.sub='${k}';R()`,V.sub==k?'on':'')).join('')}</nav>`+body;
  window.scrollTo(0,y)}
+function vBoard(g,o){
+ if(g.lu.a.some(x=>!x.p)||g.lu.h.some(x=>!x.p))return board(g,o)+'<p>先發名單尚未設定完成。</p>';
+ const bt=o.top?'a':'h',df=o.top?'h':'a',bi=o.bi[bt]%9;
+ return board(g,o)+(o.over?`<div class=c><b>比賽結束</b>　${tot(o,'a')} : ${tot(o,'h')}</div>`:'')+`<div class="c live"><div>${bases(o,false)}</div><div>${lamp('B',o.b,3,'#22c55e')}${lamp('S',o.s,2,'#facc15')}${lamp('O',o.outs,2,'#ef4444')}</div><div class=lv><b>${o.in}局${o.top?'上':'下'}</b><span><b>P</b> ${o.pt[o.pit[df]]?o.pt[o.pit[df]].P:0}</span>${lrow('投手',o.pit[df])}${lrow(bi+1+'棒',o.lu[bt][bi])}</div></div>
+ <div class=c><div style="text-align:center"><b>本打席逐球</b></div><div class=sy>${o.cur.filter(x=>x.p).map(x=>PIC(x.k)||SY[x.k]||'').join('')}</div><div class=lgd>${[['B','壞球'],['S','好球'],['W','揮空'],['F','界外']].map(([k,t])=>`<span class=lgi>${PIC(k,14)}<span>${t}</span></span>`).join('')}</div></div>`}
 async function vFetch(){
  try{const j=await sbFetch('/rest/v1/rpc/get_share',{method:'POST',body:JSON.stringify({share_id:VIEW})},false);
   if(!j||!j.data){V.verr='找不到這場比賽，或分享已經停止。';S.games=[];V.gid=null;return R()}
@@ -1001,5 +1005,5 @@ async function vFetch(){
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&AU&&!VIEW)cloudSync()});
 window.addEventListener('online',()=>{if(AU&&!VIEW)cloudSync().then(shareSync)});
 
-if(VIEW){V.sub='bx';vFetch();setInterval(()=>{if(!document.hidden)vFetch()},10000)}else{R();if(AU)cloudSync().then(shareSync)}
+if(VIEW){V.sub='rec';vFetch();setInterval(()=>{if(!document.hidden)vFetch()},10000)}else{R();if(AU)cloudSync().then(shareSync)}
 </script></body></html>
