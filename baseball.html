@@ -113,9 +113,10 @@ const findPosSlot=(o,side,k)=>o.pos[side].findIndex(p=>POSN[p]==k);
 const pendOccupants=(o,side)=>[...Array(9).keys()].filter(si=>!o.pos[side][si]&&o.lu[side][si]&&!(o.pendClosed&&o.pendClosed[side][si])).map(si=>o.lu[side][si]);
 const BN=['','一壘','二壘','三壘'];
 const RN={adv:'進壘',SB:'盜壘成功',CS:'盜壘失敗出局',WP:'暴投進壘',PB:'捕逸進壘',PO:'牽制出局',TO:'離壘被觸殺出局',out:'出局'};
+const VIEW=new URLSearchParams(location.search).get('w');
 let S;try{S=JSON.parse(localStorage.getItem('bb'))}catch(e){}S=S||{teams:[],games:[]};
 let V={tab:'t',tid:null,gid:null,sub:'rec',ss:'bp',tt:'r',cst:'bat',cs:false,op:{}};
-const save=()=>{try{localStorage.setItem('bb',JSON.stringify(S))}catch(e){}};
+const save=()=>{if(VIEW)return;let s;try{s=JSON.stringify(S);localStorage.setItem('bb',s)}catch(e){}if(typeof cloudDirty=='function')cloudDirty(s)};
 const T=id=>id==null?undefined:(S.teams.find(t=>t.id==id)||{id,name:'（已刪除的球隊）',players:[]}),G=()=>S.games.find(g=>g.id==V.gid);
 const P=id=>{for(const t of S.teams){const p=t.players.find(p=>p.id==id);if(p)return p}};
 const pn=id=>{const p=P(id);return p?[p.no,p.name].filter(Boolean).join(' '):'-'};
@@ -483,7 +484,7 @@ function calc(g){
  return o}
 
 /* ===== 操作 ===== */
-const R=()=>{save();try{const g=G();$('app').innerHTML=`<nav>${[['t','球隊'],['g','比賽']].map(([k,l])=>btn(l,`V.tab='${k}';V.gid=null;R()`,V.tab==k&&!g?'on':'')).join('')}<button class=b style="background:transparent;border-color:transparent;box-shadow:none" onclick="V.tip=true;V.tipSec=-1;R()">💡</button><button class=b style="margin-left:auto" onclick="V.bk=true;R()">🗃️</button></nav><input type=file id=bkf accept=".json,application/json" style="display:none" onchange="importBackup(this.files[0])">`+(g?game(g):V.tab=='t'?teams():games())+(V.pend&&!V.h2?modal():'')+(V.mod?smodal():'')+(V.sp&&!V.spe?spModal():'')+(V.spe?speModal():'')+(V.wp?wpModal():'')+(V.adv?advModal():'')+(V.tb?tbModal():'')+(V.ds&&!V.dse?dsModal():'')+(V.dse?dseModal():'')+(V.confirm?confirmModal():'')+(V.ph?phModal():'')+(V.bk?bkModal():'')+(V.rn?renameModal():'')+(V.gnm?gnameModal():'')+(V.pdf?pdfModal():'')+(V.rd?rdModal():'')+(V.h2?h2Modal():'')+(V.pk?pkModal():'')+(V.editLog?editLogModal():'')+(V.dm?drModal():'')+(V.warn?warnModal():'')+(V.tip?tipModal():'')+(V.hint?`<div class=mo onclick="V.hint=null;R()"><div class=md style="font-size:13px" onclick="event.stopPropagation()">${V.hint}</div></div>`:'')+(V.adj?adjModal():'')+(V.toast?`<div class=toast style="position:fixed;left:50%;right:auto;top:auto;bottom:24px;transform:translateX(-50%);max-width:80vw;width:max-content;white-space:nowrap;z-index:999">${V.toast}</div>`:'')}catch(e){console.error('render error',e);$('app').innerHTML=`<nav><button class=b onclick="V.gid=null;V.sub='rec';R()">回列表</button></nav><div class=c><b>這個畫面暫時無法顯示（資料可能有問題）。</b><br>可以按上面「回列表」返回，或稍後再試。<br><small style="opacity:.6">${(e&&e.message)||e}</small></div>`}};
+const R=()=>{if(VIEW)return vR();save();try{const g=G();$('app').innerHTML=`<nav>${[['t','球隊'],['g','比賽']].map(([k,l])=>btn(l,`V.tab='${k}';V.gid=null;R()`,V.tab==k&&!g?'on':'')).join('')}<button class=b style="background:transparent;border-color:transparent;box-shadow:none" onclick="V.tip=true;V.tipSec=-1;R()">💡</button><button class=b style="margin-left:auto" onclick="V.cl=true;R()">☁️</button><button class=b onclick="V.bk=true;R()">🗃️</button></nav><input type=file id=bkf accept=".json,application/json" style="display:none" onchange="importBackup(this.files[0])">`+(g?game(g):V.tab=='t'?teams():games())+(V.pend&&!V.h2?modal():'')+(V.mod?smodal():'')+(V.sp&&!V.spe?spModal():'')+(V.spe?speModal():'')+(V.wp?wpModal():'')+(V.adv?advModal():'')+(V.tb?tbModal():'')+(V.ds&&!V.dse?dsModal():'')+(V.dse?dseModal():'')+(V.confirm?confirmModal():'')+(V.ph?phModal():'')+(V.bk?bkModal():'')+(V.cl||V.cc?cloudModal():'')+(V.sm?shareModal():'')+(V.rn?renameModal():'')+(V.gnm?gnameModal():'')+(V.pdf?pdfModal():'')+(V.rd?rdModal():'')+(V.h2?h2Modal():'')+(V.pk?pkModal():'')+(V.editLog?editLogModal():'')+(V.dm?drModal():'')+(V.warn?warnModal():'')+(V.tip?tipModal():'')+(V.hint?`<div class=mo onclick="V.hint=null;R()"><div class=md style="font-size:13px" onclick="event.stopPropagation()">${V.hint}</div></div>`:'')+(V.adj?adjModal():'')+(V.toast?`<div class=toast style="position:fixed;left:50%;right:auto;top:auto;bottom:24px;transform:translateX(-50%);max-width:80vw;width:max-content;white-space:nowrap;z-index:999">${V.toast}</div>`:'')}catch(e){console.error('render error',e);$('app').innerHTML=`<nav><button class=b onclick="V.gid=null;V.sub='rec';R()">回列表</button></nav><div class=c><b>這個畫面暫時無法顯示（資料可能有問題）。</b><br>可以按上面「回列表」返回，或稍後再試。<br><small style="opacity:.6">${(e&&e.message)||e}</small></div>`}};
 const GTIP=(()=>{const h=t=>`<div><b class=hl>${t}</b></div>`,d=t=>`<div>${t}</div>`,sp='<div>&nbsp;</div>',pdf='<div style="color:#888;font-size:11px">可點擊📄輸出為PDF檔</div>';return{
  lu:h('出賽名單')+d('輸入球員背號或名稱關鍵字')+d('⮕確認先發球員')+d('方法1：點擊該球員按鍵')+d('方法2：按enter鍵')+d('（僅在輸入關鍵字後有唯一符合之球員適用）')+d('⮕選擇守備位子')+sp+d('勾選下方不在先發名單中的選手，可以登錄為該場比賽之候補選手，未勾選則無法在比賽中上場。'),
  bx:h('賽況簡報')+d('簡記各局各打席結果')+sp+pdf,
@@ -799,7 +800,7 @@ function games(){const tl=S.teams.map(t=>[t.id,t.name]);V.gm=V.gm||'formal';
  return `<div class=c><div class=row><h3 style="margin:0">新增比賽</h3></div>${tl.length<2?'請先建立至少兩支球隊。':`<div class=row><input id=gd type=date value="${new Date().toISOString().slice(0,10)}"><input id=gn placeholder="比賽名稱" style="width:10em"><input id=gi type=number min=1 max=15 value=9 style="width:3ch"> 局制</div><div class=row><b style="margin-right:4px">模式</b>${btn('正式',"V.gm='formal';R()",V.gm=='formal'?'pri':'')}${btn('練習',"V.gm='practice';R()",V.gm=='practice'?'pri':'')}</div><div class=lg2>${V.gm=='practice'?'練習：名單內選手可無限次交替上場':'正式：一名選手僅能上場一次'}</div><div class=row>客隊 <select id=ga>${opt(tl)}</select> 主隊 <select id=gh>${opt(tl,tl[1][0])}</select>${btn('建立','newG()','pri')}</div>`}</div>
  <div class=c><div class=row><h3 style="margin:0">比賽列表</h3>${V.gdel?'<b style="margin-left:auto;color:#d00">刪除操作中</b>':''}<button class=b style="${V.gdel?'background:#d00;border-color:#d00':'margin-left:auto;background:transparent;border-color:transparent;box-shadow:none'}" onclick="gdelBtn()">🗑️</button></div>${S.games.map(g=>`<div class=row><button class="b ${V.gdel&&V.gdel.includes(g.id)?'pri':''}" style="flex:1;text-align:left" onclick="${V.gdel?`gdelTog('${g.id}')`:`V.gid='${g.id}';V.sub='rec';R()`}">${V.gdel&&V.gdel.includes(g.id)?'✔ ':''}<span class=gd>${g.date}</span> <b>${g.name||''}</b><b class=gt>${T(g.a)?.name}</b> vs <b class=gt>${T(g.h)?.name}</b></button><button class=b style="background:transparent;border-color:transparent;box-shadow:none" onclick="startGname('${g.id}')">🖊️</button></div>`).join('')||'尚無比賽'}</div>`}
 function game(g){const o=calc(g);
- return `<div class=row><b>${g.date} ${g.name||''}</b>${btn(g.fin?'已結束（點此取消）':'結束比賽',`G().fin=!G().fin;R()`)}</div><nav>${[['lu','名單'],['bx','簡報'],['rec','計分板'],['log','逐打席'],['st','成績表']].map(([k,l])=>btn(l,`V.sub='${k}';R()`,V.sub==k?'on':'')).join('')}<button class=b style="margin-left:auto" onclick="V.pdf={kind:'game',gid:'${g.id}',sub:null};R()">📄</button></nav>`+(V.sub=='lu'?lineup(g):V.sub=='bx'?boxTable(g,o):V.sub=='rec'?rec(g,o):V.sub=='log'?recLog(g,o):stats(g,o))}
+ return `<div class=row><b>${g.date} ${g.name||''}</b>${btn(g.fin?'已結束（點此取消）':'結束比賽',`G().fin=!G().fin;R()`)}<button class=b style="background:transparent;border-color:transparent;box-shadow:none;margin-left:auto" onclick="V.sm='${g.id}';V.smm=null;R()">🔗</button></div><nav>${[['lu','名單'],['bx','簡報'],['rec','計分板'],['log','逐打席'],['st','成績表']].map(([k,l])=>btn(l,`V.sub='${k}';R()`,V.sub==k?'on':'')).join('')}<button class=b style="margin-left:auto" onclick="V.pdf={kind:'game',gid:'${g.id}',sub:null};R()">📄</button></nav>`+(V.sub=='lu'?lineup(g):V.sub=='bx'?boxTable(g,o):V.sub=='rec'?rec(g,o):V.sub=='log'?recLog(g,o):stats(g,o))}
 function boxTable(g,o){const n=Math.max(g.inn||9,o.in);
  return ['a','h'].map(s=>{const t=T(g[s]),rows=[];
   for(let slot=0;slot<9;slot++){
@@ -889,10 +890,116 @@ function statsBP(g,o,side,cats){const f=(n,d=3)=>isFinite(n)?n.toFixed(d):'-';ca
   ${cats.includes('pt')?`<h3>${t.name} 投手</h3><div class=sc><table><tr><th style="${stk(0,70)}"></th><th>局數</th><th>面對打席</th><th>用球</th><th>好球</th><th>壞球</th><th>奪三振</th><th>被安打</th><th>被全壘打</th><th>四壞</th><th>（故四）</th><th>觸身</th><th>暴投</th><th>犯規</th><th>失分</th><th>自責</th><th>非自責</th><th>勝敗</th><th>ERA</th><th>WHIP</th><th>BA</th></tr>${pt}</table></div>`:''}</div>`}).join('')}
 const LP={t:null,f:false,x:0,y:0};
 const lpCancel=()=>{clearTimeout(LP.t);LP.t=null};
-document.addEventListener('pointerdown',e=>{LP.f=false;lpCancel();const b=e.target.closest&&e.target.closest('[data-lp]');if(!b)return;LP.x=e.clientX;LP.y=e.clientY;LP.t=setTimeout(()=>{LP.t=null;LP.f=true;if(navigator.vibrate)try{navigator.vibrate(30)}catch(_){}if(b.dataset.lpact=='edl')startEditLog(b.dataset.lp)},600)},true);
+document.addEventListener('pointerdown',e=>{LP.f=false;lpCancel();const b=e.target.closest&&e.target.closest('[data-lp]');if(!b||VIEW)return;LP.x=e.clientX;LP.y=e.clientY;LP.t=setTimeout(()=>{LP.t=null;LP.f=true;if(navigator.vibrate)try{navigator.vibrate(30)}catch(_){}if(b.dataset.lpact=='edl')startEditLog(b.dataset.lp)},600)},true);
 document.addEventListener('click',e=>{if(LP.f){const b=e.target.closest&&e.target.closest('[data-lp]');if(b){e.preventDefault();e.stopPropagation();LP.f=false}}},true);
 document.addEventListener('pointermove',e=>{if(LP.t&&(Math.abs(e.clientX-LP.x)>10||Math.abs(e.clientY-LP.y)>10))lpCancel()},true);
 ['pointerup','pointercancel'].forEach(ev=>document.addEventListener(ev,lpCancel,true));
 document.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closest('[data-lp]'))e.preventDefault()});
-R();
+/* ===== 雲端同步與分享（Supabase） ===== */
+const SB={url:'https://cxzbwzahukugnwrpcmku.supabase.co',key:'sb_publishable_hVTexErOWfvTy4GSSmHZEA_XV5eEiFn'};
+const jget=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},jset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+let AU=jget('bb_auth'),SNC=jget('bb_sync')||{ts:null,dirty:false};
+const CL={last:null,t:null,busy:false,msg:'',sh:{}};
+if(!SNC.dirty)try{CL.last=localStorage.getItem('bb')}catch(e){}
+const setAuth=j=>{AU={access_token:j.access_token,refresh_token:j.refresh_token,expires_at:j.expires_at||Math.floor(Date.now()/1000)+(j.expires_in||3600),email:(j.user&&j.user.email)||(AU&&AU.email)||''};jset('bb_auth',AU)};
+const uidOf=()=>{try{return JSON.parse(atob(AU.access_token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).sub}catch(e){return ''}};
+async function sbToken(){
+ if(!AU)return null;
+ if(AU.expires_at-60>Date.now()/1000)return AU.access_token;
+ try{const j=await sbFetch('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:JSON.stringify({refresh_token:AU.refresh_token})},false);setAuth(j)}
+ catch(e){if(/invalid|expired|not found|revoked/i.test(e.message)){AU=null;jset('bb_auth',null)}}
+ return AU&&AU.access_token}
+async function sbFetch(path,opt={},auth=true){
+ const h={apikey:SB.key,'Content-Type':'application/json',...(opt.headers||{})};
+ if(auth){const t=await sbToken();if(t)h.Authorization='Bearer '+t}
+ const r=await fetch(SB.url+path,{...opt,headers:h}),tx=await r.text();let j=null;try{j=tx?JSON.parse(tx):null}catch(e){}
+ if(!r.ok)throw new Error((j&&(j.msg||j.message||j.error_description||j.error))||('HTTP '+r.status));
+ return j}
+const cloudErr=m=>/invalid login/i.test(m)?'帳號或密碼錯誤':/already registered|already exists/i.test(m)?'這個 Email 已註冊過，請改按「登入」':/at least 6/i.test(m)?'密碼至少要 6 碼':/valid email|invalid.*email/i.test(m)?'Email 格式不正確':/failed to fetch|networkerror|load failed/i.test(m)?'連不上網路':m;
+/* --- 資料同步 --- */
+function cloudDirty(s){
+ if(!AU||VIEW||s===CL.last)return;
+ if(!SNC.dirty){SNC.dirty=true;jset('bb_sync',SNC)}
+ clearTimeout(CL.t);CL.t=setTimeout(cloudTick,2500)}
+async function cloudPush(){
+ if(!AU||VIEW||CL.busy||V.cc||!navigator.onLine)return false;
+ CL.busy=true;let ok=false;
+ try{const s=JSON.stringify(S),j=await sbFetch('/rest/v1/user_state?on_conflict=owner',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify({owner:uidOf(),data:JSON.parse(s),updated_at:new Date().toISOString()})});
+  CL.last=s;SNC.ts=j[0].updated_at;SNC.dirty=false;jset('bb_sync',SNC);CL.msg='';ok=true}
+ catch(e){CL.msg='同步失敗：'+cloudErr(e.message)}
+ CL.busy=false;
+ if(ok&&JSON.stringify(S)!==CL.last){clearTimeout(CL.t);CL.t=setTimeout(cloudTick,2500)}
+ return ok}
+const cloudTick=async()=>{await cloudPush();await shareSync();if(V.cl)R()};
+function applyCloud(row){
+ S=row.data&&row.data.teams?row.data:{teams:[],games:[]};
+ try{localStorage.setItem('bb',JSON.stringify(S))}catch(e){}
+ CL.last=JSON.stringify(S);SNC.ts=row.updated_at;SNC.dirty=false;jset('bb_sync',SNC);
+ if(V.gid&&!G())V.gid=null;V.cc=null;CL.msg='已從雲端更新';R()}
+async function cloudSync(){
+ if(!AU||VIEW||!navigator.onLine)return;
+ try{
+  const rows=await sbFetch('/rest/v1/user_state?select=data,updated_at&owner=eq.'+uidOf()),row=rows&&rows[0],has=S.teams.length||S.games.length;
+  if(!row){if(has)await cloudPush()}
+  else if(SNC.ts===row.updated_at){if(SNC.dirty)await cloudPush()}
+  else if(!SNC.dirty&&(SNC.ts||!has))applyCloud(row);
+  else{V.cc={row};R()}
+ }catch(e){CL.msg='同步失敗：'+cloudErr(e.message)}
+ if(V.cl)R()}
+async function cloudNow(){CL.msg='同步中…';R();await cloudSync();if(!V.cc&&AU&&SNC.dirty)await cloudPush();await shareSync();if(CL.msg==='同步中…')CL.msg='已是最新';R()}
+async function cloudIn(kind){
+ const em=($('cle').value||'').trim(),pw=$('clp').value||'';V.cle=em;
+ if(!em||!pw){CL.msg='請輸入 Email 和密碼';return R()}
+ try{
+  const j=await sbFetch(kind=='login'?'/auth/v1/token?grant_type=password':'/auth/v1/signup',{method:'POST',body:JSON.stringify({email:em,password:pw})},false);
+  if(!j||!j.access_token){CL.msg='帳號已建立，但需要先到信箱點確認信才能登入（也可以到 Supabase 後台把 Confirm email 關掉）。';return R()}
+  setAuth(j);AU.email=em;jset('bb_auth',AU);CL.last=JSON.stringify(S);SNC={ts:null,dirty:false};jset('bb_sync',SNC);CL.msg='登入成功，同步中…';R();await cloudSync();if(CL.msg==='登入成功，同步中…')CL.msg='登入成功';R()
+ }catch(e){CL.msg=cloudErr(e.message);R()}}
+async function cloudOut(){
+ try{await sbFetch('/auth/v1/logout',{method:'POST'})}catch(e){}
+ AU=null;jset('bb_auth',null);SNC={ts:null,dirty:false};jset('bb_sync',SNC);CL.last=null;CL.sh={};CL.msg='已登出（這台裝置上的資料還在）';R()}
+const useCloud=()=>applyCloud(V.cc.row);
+async function useLocal(){SNC.ts=V.cc.row.updated_at;V.cc=null;SNC.dirty=true;await cloudPush();R()}
+function cloudModal(){
+ if(V.cc){const r=V.cc.row,d=r.data||{};return `<div class=mo><div class=md><b>雲端和這台裝置的資料不一樣</b><div class=row style="font-size:12px;opacity:.8">雲端：${(d.games||[]).length} 場比賽、${(d.teams||[]).length} 支球隊（${new Date(r.updated_at).toLocaleString()}）<br>這台：${S.games.length} 場比賽、${S.teams.length} 支球隊</div><div class=row>${btn('使用雲端資料（覆蓋這台）','useCloud()')}</div><div class=row>${btn('使用這台資料（覆蓋雲端）','useLocal()')}</div><div class=row>${btn('先不處理','V.cc=null;R()')}</div></div></div>`}
+ const st=CL.msg?`<div class=row style="font-size:12px;opacity:.85">${CL.msg}</div>`:'';
+ if(AU)return `<div class=mo onclick="V.cl=false;R()"><div class=md onclick="event.stopPropagation()"><b>☁️ 雲端同步</b><div class=row>已登入：${AU.email||''}</div>${st}${SNC.ts?`<div class=row style="font-size:12px;opacity:.7">上次同步：${new Date(SNC.ts).toLocaleString()}${SNC.dirty?'（有尚未上傳的變更）':''}</div>`:''}<div class=row>${btn('立即同步','cloudNow()','pri')}${btn('登出','cloudOut()')}</div><div class=row style="justify-content:flex-end">${btn('關閉','V.cl=false;R()')}</div></div></div>`;
+ return `<div class=mo onclick="V.cl=false;R()"><div class=md onclick="event.stopPropagation()"><b>☁️ 登入雲端</b><div class=row style="font-size:12px;opacity:.8">登入後資料會自動同步到雲端，換裝置登入就能取回。沒登入也能照常離線使用。</div><div class=row><input id=cle type=email placeholder="Email" value="${V.cle||''}" style="flex:1" autocomplete="email"></div><div class=row><input id=clp type=password placeholder="密碼（至少 6 碼）" style="flex:1" autocomplete="current-password"></div>${st}<div class=row>${btn('登入',"cloudIn('login')",'pri')}${btn('註冊新帳號',"cloudIn('signup')")}</div><div class=row style="justify-content:flex-end">${btn('關閉','V.cl=false;R()')}</div></div></div>`}
+/* --- 分享 --- */
+const snapOf=g=>({game:g,teams:[...new Set([g.a,g.h])].map(id=>S.teams.find(t=>t.id==id)).filter(Boolean)});
+async function sharePush(gid){
+ const g=S.games.find(x=>x.id==gid);if(!g)return null;const data=snapOf(g),str=JSON.stringify(data);
+ const j=await sbFetch('/rest/v1/shares?on_conflict=owner,game_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify({owner:uidOf(),game_id:gid,data,updated_at:new Date().toISOString()})});
+ CL.sh[gid]=str;return j[0].id}
+async function shareSync(){
+ if(!AU||VIEW||!S.sh||!navigator.onLine)return;
+ for(const gid of Object.keys(S.sh)){const g=S.games.find(x=>x.id==gid);if(!g||JSON.stringify(snapOf(g))===CL.sh[gid])continue;try{await sharePush(gid)}catch(e){CL.msg='分享更新失敗：'+cloudErr(e.message)}}}
+async function shareCreate(gid){
+ try{const id=await sharePush(gid);S.sh=S.sh||{};S.sh[gid]=id;V.smm=null;save()}catch(e){V.smm='建立失敗：'+cloudErr(e.message)}R()}
+async function shareStop(gid){
+ try{await sbFetch('/rest/v1/shares?owner=eq.'+uidOf()+'&game_id=eq.'+encodeURIComponent(gid),{method:'DELETE'});delete S.sh[gid];delete CL.sh[gid];V.smm=null;save()}catch(e){V.smm='停止失敗：'+cloudErr(e.message)}R()}
+function copyShare(){
+ const el=$('shl'),v=el&&el.value;const done=()=>{V.toast='已複製連結';R();setTimeout(()=>{V.toast=null;R()},1500)};
+ try{navigator.clipboard.writeText(v).then(done,()=>{el.select()})}catch(e){el&&el.select()}}
+function shareModal(){
+ const gid=V.sm,id=(S.sh||{})[gid],link=id?location.origin+location.pathname+'?w='+id:'';
+ return `<div class=mo onclick="V.sm=null;R()"><div class=md onclick="event.stopPropagation()"><b>🔗 分享比賽</b>`+(!AU?`<div class=row>請先點上方 ☁️ 登入，才能建立分享連結。</div>`:id?`<div class=row style="font-size:12px;opacity:.8">知道這個連結的人都能即時查看這場比賽（唯讀），內容會隨你的紀錄自動更新：</div><div class=row><input id=shl value="${link}" readonly style="flex:1" onclick="this.select()"></div><div class=row>${btn('複製連結','copyShare()','pri')}${btn('停止分享',`shareStop('${gid}')`)}</div>`:`<div class=row style="font-size:12px;opacity:.8">建立連結後，知道連結的人可以唯讀查看這場比賽，並隨你的紀錄自動更新。</div><div class=row>${btn('建立分享連結',`shareCreate('${gid}')`,'pri')}</div>`)+(V.smm?`<div class=row style="color:#d00;font-size:12px">${V.smm}</div>`:'')+`<div class=row style="justify-content:flex-end">${btn('關閉','V.sm=null;R()')}</div></div></div>`}
+/* --- 唯讀觀看（?w=分享代碼） --- */
+function vR(){
+ const g=G(),y=window.scrollY;
+ if(!g){$('app').innerHTML=`<div class=c>${V.verr||'載入中…'}</div>`;return}
+ const o=calc(g);
+ const live=o.over?'比賽結束':`${o.in}局${o.top?'上':'下'}　${o.b}壞 ${o.s}好 ${o.outs}出局`;
+ let body=V.sub=='bx'?boxTable(g,o):V.sub=='rec'?board(g,o)+`<div class="c live"><div>${bases(o,false)}</div><div><b>${live}</b></div></div>`:V.sub=='log'?recLog(g,o):stats(g,o).replace(/<span style="margin-left:auto"><button[^>]*>🔧<\/button><\/span>/,'');
+ $('app').innerHTML=`<div class=row><b>${g.date} ${g.name||''}</b><span style="margin-left:auto;font-size:11px;opacity:.6">唯讀${V.vt?'　更新 '+V.vt:''}</span></div><nav>${[['bx','簡報'],['rec','計分板'],['log','逐打席'],['st','成績表']].map(([k,l])=>btn(l,`V.sub='${k}';R()`,V.sub==k?'on':'')).join('')}</nav>`+body;
+ window.scrollTo(0,y)}
+async function vFetch(){
+ try{const j=await sbFetch('/rest/v1/rpc/get_share',{method:'POST',body:JSON.stringify({share_id:VIEW})},false);
+  if(!j||!j.data){V.verr='找不到這場比賽，或分享已經停止。';S.games=[];V.gid=null;return R()}
+  S.teams=j.data.teams||[];S.games=[j.data.game];V.gid=j.data.game.id;V.vt=new Date(j.updated_at).toLocaleTimeString();V.verr=null;R()
+ }catch(e){if(!V.gid)V.verr='載入失敗：'+cloudErr(e.message);R()}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&AU&&!VIEW)cloudSync()});
+window.addEventListener('online',()=>{if(AU&&!VIEW)cloudSync().then(shareSync)});
+
+if(VIEW){V.sub='bx';vFetch();setInterval(()=>{if(!document.hidden)vFetch()},10000)}else{R();if(AU)cloudSync().then(shareSync)}
 </script></body></html>
