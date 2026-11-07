@@ -137,7 +137,7 @@ function calc(g){
  const pname=id=>{const p=P(id);return p?p.name:''};
  const bT=t=>bnameTxt?`打者 ${bnameTxt} ${t}`:`打者${t}`;
  const FDN={LF:'左外野方向',RF:'右外野方向','1B':'一壘方向','3B':'三壘方向','本':'本壘後方'};
- const bo=id=>{const s=o.lu.a.includes(id)?'a':'h',i=o.lu[s].indexOf(id),p=P(id),pos=i>=0?(POSE[o.pos[s][i]]||''):'';return `<b class=bo><span class=or>${i>=0?i+1:''}</span><span class=pc>${pos}</span><span>${p?p.name:'-'}</span></b>`};
+ const bo=id=>{const s=o.lu.a.includes(id)?'a':'h',i=o.lu[s].indexOf(id),p=P(id),pos=i>=0?(POSE[o.pos[s][i]]||(o.pos[s][i]===''?'PH':'')):'';return `<b class=bo><span class=or>${i>=0?i+1:''}</span><span class=pc>${pos}</span><span>${p?p.name:'-'}</span></b>`};
  const out=()=>{o.outs++;oc++;o.lo=o.outs;Q(o.pit[o.top?'h':'a']).outs++;if(o.outs<3)return 0;taint=false;o.outs=0;o.b=0;o.s=0;o.bs.fill(null);const justBatted=o.top?'a':'h';if(o.top){o.top=false;if(o.in>=N&&tot(o,'h')>tot(o,'a')){o.over=1;o.skip=1}}else if(o.in>=N&&tot(o,'h')!=tot(o,'a'))o.over=1;else{o.top=true;o.in++}o.fresh=true;
  return 1};
  const rn=(r,k)=>{const s=o.top?'a':'h';o.sc[s][o.in-1]=(o.sc[s][o.in-1]||0)+1;rc++;const q=Q(r.p);q.R++;if(!r.u&&!taint)q.ER++;if(k&&cb&&!man)cb.RBI++;o.lead.push({d:tot(o,'a')-tot(o,'h'),a:o.pit.a,h:o.pit.h})};
@@ -249,6 +249,7 @@ function calc(g){
    else{q.S++;if(k=='S'||k=='W'){if(++o.s==3)end='K'}else if(k=='Q'){if(o.s==2)end='K'}else if(o.s<2)o.s++}
    cur.push({p:1,k,s:k=='I'?`第${cur.filter(x=>x.p).length+1}球　`:`第${cur.filter(x=>x.p).length+1}球　${L[k]}${k=='X'||k=='U'||end?'':`（${o.b}-${o.s}）`}`});mk=cur[cur.length-1];if(end)pa(end,null,null,null,null,k)};
  const H=e=>{
+  if(e.t=='p'||e.t=='ibb'){const bs0=o.top?'a':'h',sl0=o.bi[bs0]%9;if(!o.pos[bs0][sl0]){const h0=o.hist[bs0][sl0],st0=h0&&h0[h0.length-1];if(st0&&st0.tag=='PR')st0.ph=true}}
   if(e.t=='p'){const df0=o.top?'h':'a';Object.keys(o.pendDef[df0]).forEach(slot=>{const pid=o.lu[df0][slot],pk=POSN[o.pos[df0][slot]];if(pk){(o.deferredDef=o.deferredDef||[]).push(`更換守備：${pn(pid)} ➡︎ ${FN[pk]||''}`);if(pk==1&&o.pit[df0]!=pid){o.pit[df0]=pid;Q(pid);o.pitOrder[df0].push(pid)}const hs=o.hist[df0][slot],lastSt=hs[hs.length-1];if(lastSt)lastSt.positions.push(POSE[o.pos[df0][slot]]||'')}else{o.pendClosed[df0][slot]=true}delete o.pendDef[df0][slot]})}
   if(!['tb','pc','df','sb','pr','adj'].includes(e.t))o.fresh=false;
   if(e.t=='p')pitchF(e.k);
@@ -814,7 +815,7 @@ function boxTable(g,o){const n=Math.max(g.inn||9,o.in);
    const current=o.lu[s][slot];if(current&&!seen.includes(current))seen.push(current);
    seen.forEach((pid,pi)=>{
     const cells=[...Array(n)].map((_,j)=>{const hit=entries.filter(e=>e.pid==pid&&e.in==j+1);return hit.length?hit.map(x=>`<span class=bxr style="${x.runs?'font-weight:700':''}">${x.code}</span>`).join(''):''});
-    const stH=(o.hist[s][slot]||[]).find(h=>h.pid==pid),posTxt=stH&&stH.positions.length?[stH.tag=='DEF'?`(${stH.positions[0]})`:(stH.tag?`(${stH.tag})`:stH.positions[0]),...stH.positions.slice(1).map(p=>`(${p})`)].filter(Boolean).join('<br>'):(POSE[o.pos[s][slot]]||'');
+    const stH=(o.hist[s][slot]||[]).find(h=>h.pid==pid),posTxt=stH&&stH.positions.length?[stH.tag=='DEF'?`(${stH.positions[0]})`:(stH.tag?`(${stH.tag})`:stH.positions[0]),...(stH.ph?['(PH)']:[]),...stH.positions.slice(1).map(p=>`(${p})`)].filter(Boolean).join('<br>'):(POSE[o.pos[s][slot]]||'');
     rows.push(`<tr><td style="${stk(0,22)}">${pi==0?slot+1:''}</td><td style="${stk(22,60)}">${nm(pid)}</td><td class=pcell style="${stk(82,34)}">${posTxt}</td>${cells.map(c=>`<td>${c}</td>`).join('')}</tr>`)
    })
   }
@@ -887,7 +888,7 @@ function statsBP(g,o,side,cats){const f=(n,d=3)=>isFinite(n)?n.toFixed(d):'-';ca
    (o.hist[s][slot]||[]).forEach((st,si)=>{
     const b=o.bat[st.pid]||{PA:0,AB:0,H:0,d2:0,d3:0,HR:0,RBI:0,SB:0,BB:0,HBP:0,K:0,SF:0,SH:0};
     const cb=A.bat[st.pid]||b,cobp=(cb.H+cb.BB+cb.HBP)/(cb.AB+cb.BB+cb.HBP+cb.SF),cslg=(cb.H+cb.d2+2*cb.d3+3*cb.HR)/cb.AB;
-    const posLines=[st.tag=='DEF'?`(${st.positions[0]})`:(st.tag?`(${st.tag})`:st.positions[0]),...st.positions.slice(1).map(p=>`(${p})`)].filter(Boolean).join('<br>');
+    const posLines=[st.tag=='DEF'?`(${st.positions[0]})`:(st.tag?`(${st.tag})`:st.positions[0]),...(st.ph?['(PH)']:[]),...st.positions.slice(1).map(p=>`(${p})`)].filter(Boolean).join('<br>');
     rows.push(`<tr><td style="${stk(0,22)}">${si==0?slot+1:''}</td><td style="${stk(22,60)}">${nm(st.pid)}</td><td class=pcell style="${stk(82,40)}">${posLines}</td><td>${b.PA}</td><td>${b.AB}</td><td>${b.H}</td><td>${b.H-b.d2-b.d3-b.HR}</td><td>${b.d2}</td><td>${b.d3}</td><td>${b.HR}</td><td>${b.RBI}</td><td>${b.SB}</td><td>${b.BB}</td><td>(${b.IBB||0})</td><td>${b.HBP}</td><td>${b.K}</td><td>${b.SH}</td><td>${b.SF}</td><td>${f(cb.H/cb.AB)}</td><td>${f(cobp+cslg)}</td></tr>`)
    })
   }
