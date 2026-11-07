@@ -39,7 +39,7 @@ button{cursor:pointer}button.on,.b.pri{background:var(--ac);color:#fff;border-co
 .g{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;margin:6px 0}
 .g3{grid-template-columns:repeat(3,1fr)}
 .g button{padding:10px 4px;font-size:13px;min-height:40px}
-.sc{overflow-x:auto}table{border-collapse:collapse;width:100%;text-align:center;white-space:nowrap}
+.sc{overflow-x:auto}.scv{max-height:calc(100vh - 120px);overflow:auto}.scv tr:first-child th{position:sticky;top:0;background:var(--cd);z-index:3!important}.scv tr:first-child th[style*="left:"]{z-index:4!important}table{border-collapse:collapse;width:100%;text-align:center;white-space:nowrap}
 td,th{border-bottom:1px solid var(--bd);padding:3px 6px}td:first-child{text-align:left}
 
 .mo{position:fixed;left:0;right:0;top:0;bottom:0;background:#0009;display:flex;align-items:center;justify-content:center;z-index:9;padding:10px;padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
@@ -758,7 +758,7 @@ function agg(tid,rng,upto){const t=T(tid),r={bat:{},df:{},pt:{}},ui=upto?S.games
  r.teamG=teamG;
  return r}
 const togCol=(tab,k)=>{S.cfg=S.cfg||{};S.cfg[tab]=S.cfg[tab]||{};S.cfg[tab][k]=S.cfg[tab][k]===false;R()};
-const sortBy=k=>{if(V.sk==k)V.sd=V.sd=='desc'?'asc':'desc';else{V.sk=k;V.sd='desc'}R()};
+const sortBy=k=>{const xs=[...document.querySelectorAll('.sc')].map(e=>e.scrollLeft);if(k==null)V.sk=null;else if(V.sk==k)V.sd=V.sd=='desc'?'asc':'desc';else{V.sk=k;V.sd='desc'}R();document.querySelectorAll('.sc').forEach((e,i)=>{if(xs[i])e.scrollLeft=xs[i]})};
 function sortPs(t,A,tab,cols,teamOPS){const ps=t.players.filter(p=>A[tab][p.id].G>0),c=cols.find(c=>c[0]==V.sk);
  if(!c)return ps.sort((p,q)=>(parseFloat(p.no)||0)-(parseFloat(q.no)||0)||String(p.no).localeCompare(String(q.no)));
  const val=p=>{const x=A[tab][p.id];if(c[0]=='IP')return x.outs;const v=c[2](x,p,teamOPS);if(typeof v=='number')return v;if(v=='-')return null;const n=parseFloat(v);return isNaN(n)?v:n},dir=V.sd=='asc'?1:-1;
@@ -785,7 +785,7 @@ function teamStatsDF(t,A){const cols=COLS.df,on=k=>!(S.cfg&&S.cfg.df&&S.cfg.df[k
  });
  const teamTot={G:A.teamG||0,PO:0,A:0,E:0,DP:0,TP:0,PB:0,CS:0,SBA:0};players.forEach(p=>{const x=tot(p.id);['PO','A','E','DP','TP','PB','CS','SBA'].forEach(k=>teamTot[k]+=x[k])});
  const totRow=players.length?`<tr style="font-weight:700"><td style="${stk(0,60)}">球隊總計</td><td style="${stk(60,30)}"></td><td style="${stk(90,20)}"></td>${vis.map(c=>`<td>${c[2](teamTot,null)}</td>`).join('')}</tr>`:'';
- return `<div class=c>${teamBar('df')}<div class=sc><table><tr><th style="cursor:pointer;${stk(0,60)}" onclick="V.sk=null;R()">球員</th><th style="${stk(60,30)}">守位</th><th style="${stk(90,20)}"></th>${vis.map(c=>`<th style="cursor:pointer" onclick="sortBy('${c[0]}')">${c[1]}${V.sk==c[0]?(V.sd=='asc'?' ▲':' ▼'):''}</th>`).join('')}</tr>${rows.join('')||'<tr><td>尚無比賽紀錄</td></tr>'}${totRow}</table></div></div>`}
+ return `<div class=c>${teamBar('df')}<div class="sc scv"><table><tr><th style="cursor:pointer;${stk(0,60)}" onclick="sortBy(null)">球員</th><th style="${stk(60,30)}">守位</th><th style="${stk(90,20)}"></th>${vis.map(c=>`<th style="cursor:pointer" onclick="sortBy('${c[0]}')">${c[1]}${V.sk==c[0]?(V.sd=='asc'?' ▲':' ▼'):''}</th>`).join('')}</tr>${rows.join('')||'<tr><td>尚無比賽紀錄</td></tr>'}${totRow}</table></div></div>`}
 function teamStats(t){const A=agg(t.id,(S.dr&&S.dr[t.id])||null),tab=V.cst||'bat';
  if(tab=='df')return teamStatsDF(t,A);
  const cols=COLS[tab],on=k=>!(S.cfg&&S.cfg[tab]&&S.cfg[tab][k]===false),vis=cols.filter(c=>on(c[0]));
@@ -796,7 +796,7 @@ function teamStats(t){const A=agg(t.id,(S.dr&&S.dr[t.id])||null),tab=V.cst||'bat
  const plist=Object.values(A[tab]);
  const tot={};sumFields.forEach(f=>tot[f]=0);plist.forEach(x=>sumFields.forEach(f=>tot[f]+=x[f]||0));tot.G=A.teamG||0;
  const totRow=plist.length?`<tr style="font-weight:700"><td style="${stk(0,70)}">球隊總計</td>${vis.map(c=>`<td>${c[2](tot,null,teamOPS)}</td>`).join('')}</tr>`:'';
- return `<div class=c>${teamBar(tab)}<div class=sc><table><tr><th style="cursor:pointer;${stk(0,70)}" onclick="V.sk=null;R()">球員</th>${vis.map(c=>`<th style="cursor:pointer" onclick="sortBy('${c[0]}')">${c[1]}${V.sk==c[0]?(V.sd=='asc'?' ▲':' ▼'):''}</th>`).join('')}</tr>${rows||'<tr><td>尚無比賽紀錄</td></tr>'}${totRow}</table></div></div>`}
+ return `<div class=c>${teamBar(tab)}<div class="sc scv"><table><tr><th style="cursor:pointer;${stk(0,70)}" onclick="sortBy(null)">球員</th>${vis.map(c=>`<th style="cursor:pointer" onclick="sortBy('${c[0]}')">${c[1]}${V.sk==c[0]?(V.sd=='asc'?' ▲':' ▼'):''}</th>`).join('')}</tr>${rows||'<tr><td>尚無比賽紀錄</td></tr>'}${totRow}</table></div></div>`}
 function teams(){const t=T(V.tid);
  return `<div class=c><div class=row><h3 style="margin:0">球隊</h3>${V.tdel?'<b style="margin-left:auto;color:#d00">刪除操作中</b>':''}<button class=b style="${V.tdel?'background:#d00;border-color:#d00':'margin-left:auto;background:transparent;border-color:transparent;box-shadow:none'}" onclick="tdelBtn()">🗑️</button></div>${S.teams.filter(x=>!x.tmp).map(x=>{const sel=V.tdel&&V.tdel.includes(x.id);return `<div class=row>${btn((sel?'✔ ':'')+x.name,V.tdel?`tdelTog('${x.id}')`:`V.tid='${x.id}';V.pdel=null;R()`,sel?'pri':(x.id==V.tid&&!V.tdel?'on':''))}</div>`}).join('')}
  <div class=row><input id=tn placeholder="新隊名">${btn('新增球隊','addTeam()','pri')}</div></div>
