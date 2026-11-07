@@ -480,7 +480,7 @@ function calc(g){
  return o}
 
 /* ===== 操作 ===== */
-const R=()=>{if(VIEW)return vR();save();try{const g=G();$('app').innerHTML=`<nav>${[['t','球隊'],['g','比賽']].map(([k,l])=>btn(l,`V.tab='${k}';V.gid=null;R()`,V.tab==k&&!g?'on':'')).join('')}<button class=b style="background:transparent;border-color:transparent;box-shadow:none" onclick="V.tip=true;V.tipSec=-1;R()">💡</button><button class=b style="margin-left:auto" onclick="V.cl=true;R()">☁️</button></nav><input type=file id=bkf accept=".json,application/json" style="display:none" onchange="importBackup(this.files[0])">`+(g?game(g):V.tab=='t'?teams():games())+(V.pend&&!V.h2?modal():'')+(V.mod?smodal():'')+(V.sp&&!V.spe?spModal():'')+(V.spe?speModal():'')+(V.wp?wpModal():'')+(V.adv?advModal():'')+(V.tb?tbModal():'')+(V.ds&&!V.dse?dsModal():'')+(V.dse?dseModal():'')+(V.confirm?confirmModal():'')+(V.ph?phModal():'')+(V.bk?bkModal():'')+(V.cl||V.cc?cloudModal():'')+(V.sm?shareModal():'')+(V.rn?renameModal():'')+(V.gnm?gnameModal():'')+(V.pdf?pdfModal():'')+(V.rd?rdModal():'')+(V.h2?h2Modal():'')+(V.pk?pkModal():'')+(V.editLog?editLogModal():'')+(V.dm?drModal():'')+(V.warn?warnModal():'')+(V.tip?tipModal():'')+(V.hint?`<div class=mo onclick="V.hint=null;R()"><div class=md style="font-size:13px" onclick="event.stopPropagation()">${V.hint}</div></div>`:'')+(V.adj?adjModal():'')+(V.toast?`<div class=toast style="position:fixed;left:50%;right:auto;top:auto;bottom:24px;transform:translateX(-50%);max-width:80vw;width:max-content;white-space:nowrap;z-index:999">${V.toast}</div>`:'')}catch(e){console.error('render error',e);$('app').innerHTML=`<nav><button class=b onclick="V.gid=null;V.sub='rec';R()">回列表</button></nav><div class=c><b>這個畫面暫時無法顯示（資料可能有問題）。</b><br>可以按上面「回列表」返回，或稍後再試。<br><small style="opacity:.6">${(e&&e.message)||e}</small></div>`}};
+const R=()=>{if(VIEW)return vR();save();try{const g=G();$('app').innerHTML=`<nav>${[['t','球隊'],['g','比賽']].map(([k,l])=>btn(l,`V.tab='${k}';V.gid=null;R()`,V.tab==k&&!g?'on':'')).join('')}<button class=b style="background:transparent;border-color:transparent;box-shadow:none" onclick="V.tip=true;V.tipSec=-1;R()">💡</button><button class=b style="margin-left:auto" onclick="V.cl=true;R()">☁️</button></nav><input type=file id=bkf accept=".json,application/json" style="display:none" onchange="importBackup(this.files[0])">`+(g?game(g):V.tab=='t'?teams():games())+(V.pend&&!V.h2?modal():'')+(V.mod?smodal():'')+(V.sp&&!V.spe?spModal():'')+(V.spe?speModal():'')+(V.wp?wpModal():'')+(V.adv?advModal():'')+(V.tb?tbModal():'')+(V.ds&&!V.dse?dsModal():'')+(V.dse?dseModal():'')+(V.confirm?confirmModal():'')+(V.ph?phModal():'')+(V.bk?bkModal():'')+(V.cl||V.cc?cloudModal():'')+(V.sm?shareModal():'')+(V.pw?pwModal():'')+(V.rn?renameModal():'')+(V.gnm?gnameModal():'')+(V.pdf?pdfModal():'')+(V.rd?rdModal():'')+(V.h2?h2Modal():'')+(V.pk?pkModal():'')+(V.editLog?editLogModal():'')+(V.dm?drModal():'')+(V.warn?warnModal():'')+(V.tip?tipModal():'')+(V.hint?`<div class=mo onclick="V.hint=null;R()"><div class=md style="font-size:13px" onclick="event.stopPropagation()">${V.hint}</div></div>`:'')+(V.adj?adjModal():'')+(V.toast?`<div class=toast style="position:fixed;left:50%;right:auto;top:auto;bottom:24px;transform:translateX(-50%);max-width:80vw;width:max-content;white-space:nowrap;z-index:999">${V.toast}</div>`:'')}catch(e){console.error('render error',e);$('app').innerHTML=`<nav><button class=b onclick="V.gid=null;V.sub='rec';R()">回列表</button></nav><div class=c><b>這個畫面暫時無法顯示（資料可能有問題）。</b><br>可以按上面「回列表」返回，或稍後再試。<br><small style="opacity:.6">${(e&&e.message)||e}</small></div>`}};
 const GTIP=(()=>{const h=t=>`<div><b class=hl>${t}</b></div>`,d=t=>`<div>${t}</div>`,sp='<div>&nbsp;</div>',pdf='<div style="color:#888;font-size:11px">可點擊📄輸出為PDF檔</div>';return{
  lu:h('出賽名單')+d('輸入球員背號或名稱關鍵字')+d('確認先發球員及守備位子')+d('方法1：點擊欄位下方跳出之球員方塊')+d('方法2：按enter鍵確認')+d('（一般球隊：僅在篩選出唯一符合者時適用）')+d('（臨時球隊：可任意設定球員名稱後按確認）')+sp+d('勾選下方不在先發名單中的選手，可以登錄為該場比賽之候補選手，未勾選則無法在比賽中上場。臨時球隊要設定候補選手，須在此先新增球員後再點選。')+d('臨時球隊在此介面按下新增球隊後，即可在球隊介面查看球隊資訊及數據。'),
  bx:h('賽況簡報')+d('簡記各局各打席結果')+sp+pdf,
@@ -922,7 +922,7 @@ async function sbFetch(path,opt={},auth=true){
  const r=await fetch(SB.url+path,{...opt,headers:h}),tx=await r.text();let j=null;try{j=tx?JSON.parse(tx):null}catch(e){}
  if(!r.ok)throw new Error((j&&(j.msg||j.message||j.error_description||j.error))||('HTTP '+r.status));
  return j}
-const cloudErr=m=>/invalid login/i.test(m)?'帳號或密碼錯誤':/already registered|already exists/i.test(m)?'這個 Email 已註冊過，請改按「登入」':/at least 6/i.test(m)?'密碼至少要 6 碼':/valid email|invalid.*email/i.test(m)?'Email 格式不正確':/failed to fetch|networkerror|load failed/i.test(m)?'連不上網路':m;
+const cloudErr=m=>/different from the old|same password/i.test(m)?'新密碼不能和舊密碼相同':/rate limit|too many|only request this after/i.test(m)?'操作太頻繁，請稍後再試（寄信有次數限制）':/invalid login/i.test(m)?'帳號或密碼錯誤':/already registered|already exists/i.test(m)?'這個 Email 已註冊過，請改按「登入」':/at least 6/i.test(m)?'密碼至少要 6 碼':/valid email|invalid.*email/i.test(m)?'Email 格式不正確':/failed to fetch|networkerror|load failed/i.test(m)?'連不上網路':m;
 /* --- 資料同步 --- */
 function cloudDirty(s){
  if(!AU||VIEW||s===CL.last)return;
@@ -970,8 +970,31 @@ async function useLocal(){SNC.ts=V.cc.row.updated_at;V.cc=null;SNC.dirty=true;aw
 function cloudModal(){
  if(V.cc){const r=V.cc.row,d=r.data||{};return `<div class=mo><div class=md><b>雲端和本機的資料不一樣</b><div class=row style="font-size:12px;opacity:.8">雲端：${(d.games||[]).length} 場比賽、${(d.teams||[]).length} 支球隊（${new Date(r.updated_at).toLocaleString()}）<br>本機：${S.games.length} 場比賽、${S.teams.length} 支球隊</div><div class=row>${btn('使用雲端資料（覆蓋本機）','useCloud()')}</div><div class=row>${btn('使用本機資料（覆蓋雲端）','useLocal()')}</div><div class=row>${btn('先不處理','V.cc=null;R()')}</div></div></div>`}
  const st=CL.msg?`<div class=row style="font-size:12px;opacity:.85">${CL.msg}</div>`:'';
- if(AU)return `<div class=mo onclick="V.cl=false;R()"><div class=md onclick="event.stopPropagation()"><b>☁️ 雲端同步</b><div class=row>已登入：${AU.email||''}</div>${st}${SNC.ts?`<div class=row style="font-size:12px;opacity:.7">上次同步：${new Date(SNC.ts).toLocaleString()}${SNC.dirty?'（有尚未上傳的變更）':''}</div>`:''}<div class=row>${btn('立即同步','cloudNow()','pri')}${btn('登出','cloudOut()')}</div><div class=row style="justify-content:flex-end">${btn('關閉','V.cl=false;R()')}</div></div></div>`;
- return `<div class=mo onclick="V.cl=false;R()"><div class=md onclick="event.stopPropagation()"><b>☁️ 登入雲端</b><div class=row style="font-size:12px;opacity:.8">登入後資料會自動同步到雲端，換裝置登入就能取回。沒登入也能照常離線使用。</div><div class=row><input id=cle type=email placeholder="Email" value="${V.cle||''}" style="flex:1" autocomplete="email"></div><div class=row><input id=clp type=password placeholder="密碼（至少 6 碼）" style="flex:1" autocomplete="current-password"></div>${st}<div class=row>${btn('登入',"cloudIn('login')",'pri')}${btn('註冊新帳號',"cloudIn('signup')")}</div><div class=row style="justify-content:flex-end">${btn('關閉','V.cl=false;R()')}</div></div></div>`}
+ if(AU)return `<div class=mo onclick="V.cl=false;R()"><div class=md onclick="event.stopPropagation()"><b>☁️ 雲端同步</b><div class=row>已登入：${AU.email||''}</div>${st}${SNC.ts?`<div class=row style="font-size:12px;opacity:.7">上次同步：${new Date(SNC.ts).toLocaleString()}${SNC.dirty?'（有尚未上傳的變更）':''}</div>`:''}<div class=row>${btn('立即同步','cloudNow()','pri')}${btn('修改密碼',"V.pw={};V.pwm=null;R()")}${btn('登出','cloudOut()')}</div><div class=row style="justify-content:flex-end">${btn('關閉','V.cl=false;R()')}</div></div></div>`;
+ return `<div class=mo onclick="V.cl=false;R()"><div class=md onclick="event.stopPropagation()"><b>☁️ 登入雲端</b><div class=row style="font-size:12px;opacity:.8">登入後資料會自動同步到雲端，換裝置登入就能取回。沒登入也能照常離線使用。</div><div class=row><input id=cle type=email placeholder="Email" value="${V.cle||''}" style="flex:1" autocomplete="email"></div><div class=row><input id=clp type=password placeholder="密碼（至少 6 碼）" style="flex:1" autocomplete="current-password"></div>${st}<div class=row>${btn('登入',"cloudIn('login')",'pri')}${btn('註冊新帳號',"cloudIn('signup')")}</div><div class=row>${btn('忘記密碼',"cloudForgot()")}</div><div class=row style="justify-content:flex-end">${btn('關閉','V.cl=false;R()')}</div></div></div>`}
+/* --- 忘記密碼／修改密碼 --- */
+async function cloudForgot(){
+ const em=($('cle').value||'').trim();V.cle=em;
+ if(!em){CL.msg='請先在上面輸入 Email，再按「忘記密碼」';return R()}
+ try{await sbFetch('/auth/v1/recover?redirect_to='+encodeURIComponent(location.origin+location.pathname),{method:'POST',body:JSON.stringify({email:em})},false);CL.msg='已寄出重設密碼信到 '+em+'，請到信箱點連結（也請看一下垃圾郵件匣）。'}
+ catch(e){CL.msg=cloudErr(e.message)}R()}
+function pwModal(){return `<div class=mo><div class=md><b>${V.pw.rec?'設定新密碼':'修改密碼'}</b><div class=row><input id=pw1 type=password placeholder="新密碼（至少 6 碼）" style="flex:1" autocomplete="new-password"></div><div class=row><input id=pw2 type=password placeholder="再輸入一次" style="flex:1" autocomplete="new-password"></div>${V.pwm?`<div class=row style="color:#d00;font-size:12px">${V.pwm}</div>`:''}<div class=row style="justify-content:flex-end">${btn('確認','pwSave()','pri')}${btn('取消','V.pw=null;V.pwm=null;R()')}</div></div></div>`}
+async function pwSave(){
+ const a=$('pw1').value,b=$('pw2').value;
+ if(a.length<6){V.pwm='密碼至少要 6 碼';return R()}
+ if(a!==b){V.pwm='兩次輸入的密碼不一致';return R()}
+ try{await sbFetch('/auth/v1/user',{method:'PUT',body:JSON.stringify({password:a})});V.pw=null;V.pwm=null;CL.msg='密碼已更新';V.cl=true;R();cloudSync()}
+ catch(e){V.pwm=cloudErr(e.message);R()}}
+async function cloudHash(){
+ const h=location.hash.replace(/^#/,'');if(!h||!/access_token|error/.test(h))return;
+ const q=new URLSearchParams(h);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+ if(q.get('error_description')){const m=q.get('error_description');CL.msg=/expired|invalid/i.test(m)?'重設連結已失效，請重新按「忘記密碼」申請':m;V.cl=true;return R()}
+ if(!q.get('access_token'))return;
+ const was=!!AU;setAuth({access_token:q.get('access_token'),refresh_token:q.get('refresh_token'),expires_in:+q.get('expires_in')||3600});
+ try{const u=await sbFetch('/auth/v1/user');AU.email=u.email;jset('bb_auth',AU)}catch(e){}
+ if(!was){CL.last=JSON.stringify(S);SNC={ts:null,dirty:false};jset('bb_sync',SNC)}
+ if(q.get('type')=='recovery')V.pw={rec:true};else CL.msg='登入成功';
+ R()}
 /* --- 分享 --- */
 const snapOf=g=>({game:g,teams:[...new Set([g.a,g.h])].map(id=>S.teams.find(t=>t.id==id)).filter(Boolean)});
 async function sharePush(gid){
@@ -1012,5 +1035,5 @@ async function vFetch(){
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&AU&&!VIEW)cloudSync()});
 window.addEventListener('online',()=>{if(AU&&!VIEW)cloudSync().then(shareSync)});
 
-if(VIEW){V.sub='rec';vFetch();setInterval(()=>{if(!document.hidden)vFetch()},10000)}else{R();if(AU)cloudSync().then(shareSync)}
+if(VIEW){V.sub='rec';vFetch();setInterval(()=>{if(!document.hidden)vFetch()},10000)}else{R();cloudHash().then(()=>{if(AU)cloudSync().then(shareSync)})}
 </script></body></html>
