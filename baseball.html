@@ -39,7 +39,7 @@ button{cursor:pointer}button.on,.b.pri{background:var(--ac);color:#fff;border-co
 .g{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;margin:6px 0}
 .g3{grid-template-columns:repeat(3,1fr)}
 .g button{padding:10px 4px;font-size:13px;min-height:40px}
-.sc{overflow-x:auto}.scv{max-height:calc(100vh - 120px);overflow:auto}.scv tr:first-child th{position:sticky;top:0;background:var(--cd);z-index:3!important}.scv tr:first-child th[style*="left:"]{z-index:4!important}table{border-collapse:collapse;width:100%;text-align:center;white-space:nowrap}
+.sc{overflow-x:auto}.scv{max-height:calc(100vh - 120px);overflow:auto}.scv tr:first-child th{position:sticky;top:0;background:var(--cd);z-index:3!important}.scv tr:first-child th[style*="left:"]{z-index:4!important}.scb{max-height:calc(21*30px)}.sc{cursor:grab}.sc.dragging{cursor:grabbing;user-select:none}@media print{.scv{max-height:none!important;overflow:visible!important}}table{border-collapse:collapse;width:100%;text-align:center;white-space:nowrap}
 td,th{border-bottom:1px solid var(--bd);padding:3px 6px}td:first-child{text-align:left}
 
 .mo{position:fixed;left:0;right:0;top:0;bottom:0;background:#0009;display:flex;align-items:center;justify-content:center;z-index:9;padding:10px;padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
@@ -758,6 +758,13 @@ function agg(tid,rng,upto){const t=T(tid),r={bat:{},df:{},pt:{}},ui=upto?S.games
  r.teamG=teamG;
  return r}
 const togCol=(tab,k)=>{S.cfg=S.cfg||{};S.cfg[tab]=S.cfg[tab]||{};S.cfg[tab][k]=S.cfg[tab][k]===false;R()};
+
+(()=>{let d=null,moved=false;
+ document.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0)return;const sc=e.target.closest&&e.target.closest('.sc');if(!sc||e.target.closest('input,select,textarea,button,a'))return;d={sc,x:e.clientX,y:e.clientY,l:sc.scrollLeft,t:sc.scrollTop};moved=false});
+ document.addEventListener('pointermove',e=>{if(!d)return;const dx=e.clientX-d.x,dy=e.clientY-d.y;if(!moved&&Math.abs(dx)+Math.abs(dy)<5)return;moved=true;d.sc.classList.add('dragging');d.sc.scrollLeft=d.l-dx;d.sc.scrollTop=d.t-dy});
+ const end=()=>{if(d){d.sc.classList.remove('dragging');d=null}};
+ document.addEventListener('pointerup',end);document.addEventListener('pointercancel',end);
+ document.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false}},true)})();
 const sortBy=k=>{const xs=[...document.querySelectorAll('.sc')].map(e=>e.scrollLeft);if(k==null)V.sk=null;else if(V.sk==k)V.sd=V.sd=='desc'?'asc':'desc';else{V.sk=k;V.sd='desc'}R();document.querySelectorAll('.sc').forEach((e,i)=>{if(xs[i])e.scrollLeft=xs[i]})};
 function sortPs(t,A,tab,cols,teamOPS){const ps=t.players.filter(p=>A[tab][p.id].G>0),c=cols.find(c=>c[0]==V.sk);
  if(!c)return ps.sort((p,q)=>(parseFloat(p.no)||0)-(parseFloat(q.no)||0)||String(p.no).localeCompare(String(q.no)));
@@ -832,7 +839,7 @@ function boxTable(g,o){const n=Math.max(g.inn||9,o.in);
     rows.push(`<tr><td style="${stk(0,22)}">${pi==0?slot+1:''}</td><td style="${stk(22,60)}">${nm(pid)}</td><td class=pcell style="${stk(82,34)}">${posTxt}</td>${cells.map(c=>`<td>${c}</td>`).join('')}</tr>`)
    })
   }
-  return `<div class=c><h3>${t.name}</h3><div class=sc><table class=boxtb><tr><th style="${stk(0,22)}"></th><th style="${stk(22,60)}">球員</th><th style="${stk(82,34)}">守位</th>${[...Array(n)].map((_,j)=>`<th>${j+1}</th>`).join('')}</tr>${rows.join('')}</table></div></div>`}).join('')}
+  return `<div class=c><h3>${t.name}</h3><div class="sc scv scb"><table class=boxtb><tr><th style="${stk(0,22)}"></th><th style="${stk(22,60)}">球員</th><th style="${stk(82,34)}">守位</th>${[...Array(n)].map((_,j)=>`<th>${j+1}</th>`).join('')}</tr>${rows.join('')}</table></div></div>`}).join('')}
 const setSP=(s,v)=>{const g=G();g.sp=g.sp||{};g.sp[s]=v;R()};
 const plbl=p=>[p.no,p.name].filter(Boolean).join(' ');
 const findP=(t,val)=>{if(!val)return '';const v=val.trim();let m=t.players.find(p=>plbl(p)==v);if(m)return m.id;m=t.players.find(p=>String(p.no)==v||p.name==v);if(m)return m.id;const cs=t.players.filter(p=>plbl(p).includes(v));if(cs.length==1)return cs[0].id;return null};
@@ -893,7 +900,7 @@ function statsDF(g,o){return ['a','h'].map(s=>{const t=T(g[s]),A=agg(g[s],null,g
    rows.push(`<tr><td style="${stk(0,22)}">${si==0?slot+1:''}</td><td style="${stk(22,60)}">${nm(st.pid)}</td><td class=pcell style="${stk(82,30)}">${posLines}</td><td>${ctcAll?((capo+caas)/ctcAll).toFixed(3):'-'}</td><td>${tc}</td><td>${agg2.E}</td><td>${agg2.PO}</td><td>${agg2.A}</td><td>${agg2.DP}</td><td>${agg2.TP}</td><td>${agg2.PB}</td><td>${agg2.CS}</td><td>${agg2.SBA}</td></tr>`)
   })
  }
- return `<div class=c><h3>${t.name} 守備</h3><div class=sc><table><tr><th style="${stk(0,22)}"></th><th style="${stk(22,60)}">球員</th><th style="${stk(82,30)}">守位</th><th>守備率</th><th>守備機會</th><th>失誤</th><th>刺殺</th><th>助殺</th><th>雙殺</th><th>三殺</th><th>捕逸</th><th>阻殺</th><th>被盜成功</th></tr>${rows.join('')}</table></div></div>`}).join('')}
+ return `<div class=c><h3>${t.name} 守備</h3><div class="sc scv"><table><tr><th style="${stk(0,22)}"></th><th style="${stk(22,60)}">球員</th><th style="${stk(82,30)}">守位</th><th>守備率</th><th>守備機會</th><th>失誤</th><th>刺殺</th><th>助殺</th><th>雙殺</th><th>三殺</th><th>捕逸</th><th>阻殺</th><th>被盜成功</th></tr>${rows.join('')}</table></div></div>`}).join('')}
 function statsBP(g,o,side,cats){const f=(n,d=3)=>isFinite(n)?n.toFixed(d):'-';cats=cats||['bat','pt'];
  return (side?[side]:['a','h']).map(s=>{const t=T(g[s]),A=agg(g[s],null,g);
   const rows=[];
@@ -907,8 +914,8 @@ function statsBP(g,o,side,cats){const f=(n,d=3)=>isFinite(n)?n.toFixed(d):'-';ca
   }
   const pt=o.pitOrder[s].map(pid=>{const q=o.pt[pid],c=A.pt[pid]||q;
    return `<tr><td style="${stk(0,70)}">${nm(pid)}</td><td>${Math.floor(q.outs/3)}.${q.outs%3}</td><td>${q.BF}</td><td>${q.P}</td><td>${q.S}</td><td>${q.B}</td><td>${q.K}</td><td>${q.H}</td><td>${q.HR||0}</td><td>${q.BB}</td><td>(${q.IBB||0})</td><td>${q.HBP}</td><td>${q.WP||0}</td><td>${q.BK||0}</td><td>${q.R}</td><td>${q.ER}</td><td>${q.R-q.ER}</td><td>${(g.fin||o.over)?(q.W?'勝':q.L?'敗':'無關'):'-'}</td><td>${f(c.ER*27/c.outs,2)}</td><td>${f((c.BB+c.H)*3/c.outs,2)}</td><td>${f3(c.H/c.AB)}</td></tr>`}).join('');
-  return `<div class=c>${cats.includes('bat')?`<h3>${t.name} 打擊</h3><div class=sc><table><tr><th style="${stk(0,22)}"></th><th style="${stk(22,60)}">球員</th><th style="${stk(82,40)}">守位</th><th>打席</th><th>打數</th><th>安打</th><th>一安</th><th>二安</th><th>三安</th><th>全壘打</th><th>打點</th><th>盜壘</th><th>四壞</th><th>（故四）</th><th>觸身</th><th>被三振</th><th>犠短</th><th>犠飛</th><th>打擊率</th><th>OPS</th></tr>${rows.join('')}</table></div>`:''}
-  ${cats.includes('pt')?`<h3>${t.name} 投手</h3><div class=sc><table><tr><th style="${stk(0,70)}"></th><th>局數</th><th>面對打席</th><th>用球</th><th>好球</th><th>壞球</th><th>奪三振</th><th>被安打</th><th>被全壘打</th><th>四壞</th><th>（故四）</th><th>觸身</th><th>暴投</th><th>犯規</th><th>失分</th><th>自責</th><th>非自責</th><th>勝敗</th><th>ERA</th><th>WHIP</th><th>BA</th></tr>${pt}</table></div>`:''}</div>`}).join('')}
+  return `<div class=c>${cats.includes('bat')?`<h3>${t.name} 打擊</h3><div class="sc scv"><table><tr><th style="${stk(0,22)}"></th><th style="${stk(22,60)}">球員</th><th style="${stk(82,40)}">守位</th><th>打席</th><th>打數</th><th>安打</th><th>一安</th><th>二安</th><th>三安</th><th>全壘打</th><th>打點</th><th>盜壘</th><th>四壞</th><th>（故四）</th><th>觸身</th><th>被三振</th><th>犠短</th><th>犠飛</th><th>打擊率</th><th>OPS</th></tr>${rows.join('')}</table></div>`:''}
+  ${cats.includes('pt')?`<h3>${t.name} 投手</h3><div class="sc scv"><table><tr><th style="${stk(0,70)}"></th><th>局數</th><th>面對打席</th><th>用球</th><th>好球</th><th>壞球</th><th>奪三振</th><th>被安打</th><th>被全壘打</th><th>四壞</th><th>（故四）</th><th>觸身</th><th>暴投</th><th>犯規</th><th>失分</th><th>自責</th><th>非自責</th><th>勝敗</th><th>ERA</th><th>WHIP</th><th>BA</th></tr>${pt}</table></div>`:''}</div>`}).join('')}
 const LP={t:null,f:false,x:0,y:0};
 const lpCancel=()=>{clearTimeout(LP.t);LP.t=null};
 document.addEventListener('pointerdown',e=>{LP.f=false;lpCancel();const b=e.target.closest&&e.target.closest('[data-lp]');if(!b||VIEW)return;LP.x=e.clientX;LP.y=e.clientY;LP.t=setTimeout(()=>{LP.t=null;LP.f=true;if(navigator.vibrate)try{navigator.vibrate(30)}catch(_){}if(b.dataset.lpact=='edl')startEditLog(b.dataset.lp)},600)},true);
