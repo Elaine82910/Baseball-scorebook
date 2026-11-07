@@ -761,7 +761,7 @@ function sortPs(t,A,tab,cols,teamOPS){const ps=t.players.filter(p=>A[tab][p.id].
  if(!c)return ps.sort((p,q)=>(parseFloat(p.no)||0)-(parseFloat(q.no)||0)||String(p.no).localeCompare(String(q.no)));
  const val=p=>{const x=A[tab][p.id];if(c[0]=='IP')return x.outs;const v=c[2](x,p,teamOPS);if(typeof v=='number')return v;if(v=='-')return null;const n=parseFloat(v);return isNaN(n)?v:n},dir=V.sd=='asc'?1:-1;
  return ps.sort((p,q)=>{const a=val(p),b=val(q);if(a===null&&b===null)return 0;if(a===null)return 1;if(b===null)return -1;return(typeof a=='string'||typeof b=='string'?String(a).localeCompare(String(b),'zh'):a-b)*dir})}
-function teamBar(tab){const on=k=>!(S.cfg&&S.cfg[tab]&&S.cfg[tab][k]===false),cols=COLS[tab];return `<div class=row><div style="flex:1;display:flex;gap:6px">${[['bat','打擊'],['df','守備'],['pt','投球']].map(([k,l])=>btn(l,`V.cst='${k}';V.sk=null;R()`,tab==k?'on':'')).join('')}</div>${btn('🗓️',`openDr('${V.tid}')`)}${btn('⚙','V.cs=!V.cs;R()',V.cs?'on':'')}<button class=b onclick="V.pdf={kind:'team',tid:'${V.tid}',cats:['${tab}']};R()">📄</button></div>${(S.dr&&S.dr[V.tid])?`<div class=lg2>統計區間：${(S.dr[V.tid].from||'最早').replace(/-/g,'/')} ～ ${(S.dr[V.tid].to||'最新').replace(/-/g,'/')}</div>`:''}${V.cs?`<div class=c><b>顯示項目</b><div class="cklist ck4">${cols.map(c=>`<label class=ck><input type=checkbox ${on(c[0])?'checked':''} onchange="togCol('${tab}','${c[0]}')"><span>${c[1]}</span></label>`).join('')}</div></div>`:''}`}
+function teamBar(tab){const on=k=>!(S.cfg&&S.cfg[tab]&&S.cfg[tab][k]===false),cols=COLS[tab];return `<div class=row><div style="flex:1;display:flex;gap:6px">${[['bat','打擊'],['df','守備'],['pt','投球']].map(([k,l])=>btn(l,`V.cst='${k}';V.sk=null;R()`,tab==k?'on':'')).join('')}</div>${btn('🗓️',`openDr('${V.tid}')`)}${btn('⚙','V.cs=!V.cs;R()',V.cs?'on':'')}<button class=b onclick="V.pdf={kind:'team',tid:'${V.tid}',cats:['${tab}']};R()">📄</button>${VIEW?'':btn('🔗',`V.sm='team:${V.tid}';V.smm=null;R()`)}</div>${(S.dr&&S.dr[V.tid])?`<div class=lg2>統計區間：${(S.dr[V.tid].from||'最早').replace(/-/g,'/')} ～ ${(S.dr[V.tid].to||'最新').replace(/-/g,'/')}</div>`:''}${V.cs?`<div class=c><b>顯示項目</b><div class="cklist ck4">${cols.map(c=>`<label class=ck><input type=checkbox ${on(c[0])?'checked':''} onchange="togCol('${tab}','${c[0]}')"><span>${c[1]}</span></label>`).join('')}</div></div>`:''}`}
 function teamStatsDF(t,A){const cols=COLS.df,on=k=>!(S.cfg&&S.cfg.df&&S.cfg.df[k]===false),vis=cols.filter(c=>on(c[0]));
  const tot=pid=>{const x={G:A.df[pid].G,PO:0,A:0,E:0,DP:0,TP:0,PB:0,CS:0,SBA:0};Object.values(A.df[pid].pos).forEach(p=>{x.PO+=p.PO;x.A+=p.A;x.E+=p.E;x.DP+=p.DP;x.TP+=p.TP||0;x.PB+=p.PB;x.CS+=p.CS;x.SBA+=p.SBA});return x};
  let players=t.players.filter(p=>A.df[p.id].G>0);
@@ -997,13 +997,15 @@ async function cloudHash(){
  R()}
 /* --- 分享 --- */
 const snapOf=g=>({game:g,teams:[...new Set([g.a,g.h])].map(id=>S.teams.find(t=>t.id==id)).filter(Boolean)});
+const snapTeam=tid=>{const t=S.teams.find(x=>x.id==tid);if(!t)return null;const gs=S.games.filter(g=>g.a==tid||g.h==tid),ids=new Set([tid]);gs.forEach(g=>{ids.add(g.a);ids.add(g.h)});return{kind:'team',tid,teams:[...ids].map(id=>S.teams.find(x=>x.id==id)).filter(Boolean),games:gs,dr:(S.dr||{})[tid]||null,cfg:S.cfg||null}};
+const snapKey=k=>{if(k.startsWith('team:'))return snapTeam(k.slice(5));const g=S.games.find(x=>x.id==k);return g?snapOf(g):null};
 async function sharePush(gid){
- const g=S.games.find(x=>x.id==gid);if(!g)return null;const data=snapOf(g),str=JSON.stringify(data);
+ const data=snapKey(gid);if(!data)return null;const str=JSON.stringify(data);
  const j=await sbFetch('/rest/v1/shares?on_conflict=owner,game_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify({owner:uidOf(),game_id:gid,data,updated_at:new Date().toISOString()})});
  CL.sh[gid]=str;return j[0].id}
 async function shareSync(){
  if(!AU||VIEW||!S.sh||!navigator.onLine)return;
- for(const gid of Object.keys(S.sh)){const g=S.games.find(x=>x.id==gid);if(!g||JSON.stringify(snapOf(g))===CL.sh[gid])continue;try{await sharePush(gid)}catch(e){CL.msg='分享更新失敗：'+cloudErr(e.message)}}}
+ for(const gid of Object.keys(S.sh)){const d=snapKey(gid);if(!d||JSON.stringify(d)===CL.sh[gid])continue;try{await sharePush(gid)}catch(e){CL.msg='分享更新失敗：'+cloudErr(e.message)}}}
 async function shareCreate(gid){
  try{const id=await sharePush(gid);S.sh=S.sh||{};S.sh[gid]=id;V.smm=null;save()}catch(e){V.smm='建立失敗：'+cloudErr(e.message)}R()}
 async function shareStop(gid){
@@ -1012,11 +1014,12 @@ function copyShare(){
  const el=$('shl'),v=el&&el.value;const done=()=>{V.toast='已複製連結';R();setTimeout(()=>{V.toast=null;R()},1500)};
  try{navigator.clipboard.writeText(v).then(done,()=>{el.select()})}catch(e){el&&el.select()}}
 function shareModal(){
- const gid=V.sm,id=(S.sh||{})[gid],link=id?location.origin+location.pathname+'?w='+id:'';
- return `<div class=mo onclick="V.sm=null;R()"><div class=md onclick="event.stopPropagation()"><b>🔗 分享比賽</b>`+(!AU?`<div class=row>請先點上方 ☁️ 登入，才能建立分享連結。</div>`:id?`<div class=row style="font-size:12px;opacity:.8">知道這個連結的人都能即時查看這場比賽（唯讀），內容會隨你的紀錄自動更新：</div><div class=row><input id=shl value="${link}" readonly style="flex:1" onclick="this.select()"></div><div class=row>${btn('複製連結','copyShare()','pri')}${btn('停止分享',`shareStop('${gid}')`)}</div>`:`<div class=row style="font-size:12px;opacity:.8">建立連結後，知道連結的人可以唯讀查看這場比賽，並隨你的紀錄自動更新。</div><div class=row>${btn('建立分享連結',`shareCreate('${gid}')`,'pri')}</div>`)+(V.smm?`<div class=row style="color:#d00;font-size:12px">${V.smm}</div>`:'')+`<div class=row style="justify-content:flex-end">${btn('關閉','V.sm=null;R()')}</div></div></div>`}
+ const gid=V.sm,tm=gid.startsWith('team:'),noun=tm?'這支球隊的打擊、投球、守備數據':'這場比賽',id=(S.sh||{})[gid],link=id?location.origin+location.pathname+'?w='+id:'';
+ return `<div class=mo onclick="V.sm=null;R()"><div class=md onclick="event.stopPropagation()"><b>🔗 分享${tm?'球隊數據':'比賽'}</b>`+(!AU?`<div class=row>請先點上方 ☁️ 登入，才能建立分享連結。</div>`:id?`<div class=row style="font-size:12px;opacity:.8">知道這個連結的人都能即時查看${noun}（唯讀），內容會隨你的紀錄自動更新：</div><div class=row><input id=shl value="${link}" readonly style="flex:1" onclick="this.select()"></div><div class=row>${btn('複製連結','copyShare()','pri')}${btn('停止分享',`shareStop('${gid}')`)}</div>`:`<div class=row style="font-size:12px;opacity:.8">建立連結後，知道連結的人可以唯讀查看${noun}，並隨你的紀錄自動更新。${tm?'（會一併包含相關比賽的對手球員資料）':''}</div><div class=row>${btn('建立分享連結',`shareCreate('${gid}')`,'pri')}</div>`)+(V.smm?`<div class=row style="color:#d00;font-size:12px">${V.smm}</div>`:'')+`<div class=row style="justify-content:flex-end">${btn('關閉','V.sm=null;R()')}</div></div></div>`}
 /* --- 唯讀觀看（?w=分享代碼） --- */
 function vR(){
  const g=G(),y=window.scrollY;
+ if(V.vk=='team'){const t=T(V.tid);if(!t){$('app').innerHTML=`<div class=c>${V.verr||'載入中…'}</div>`;return}$('app').innerHTML=`<div class=row><b>${escA(t.name)}　球隊數據</b><span style="margin-left:auto;font-size:11px;opacity:.6">唯讀${V.vt?'　更新 '+V.vt:''}</span></div>`+teamStats(t)+(V.dm?drModal():'')+(V.pdf?pdfModal():'');window.scrollTo(0,y);return}
  if(!g){$('app').innerHTML=`<div class=c>${V.verr||'載入中…'}</div>`;return}
  const o=calc(g);
   let body=V.sub=='bx'?boxTable(g,o):V.sub=='rec'?vBoard(g,o):V.sub=='log'?recLog(g,o):stats(g,o).replace(/<span style="margin-left:auto"><button[^>]*>🔧<\/button><\/span>/,'');
@@ -1030,7 +1033,7 @@ function vBoard(g,o){
 async function vFetch(){
  try{const j=await sbFetch('/rest/v1/rpc/get_share',{method:'POST',body:JSON.stringify({share_id:VIEW})},false);
   if(!j||!j.data){V.verr='找不到這場比賽，或分享已經停止。';S.games=[];V.gid=null;return R()}
-  S.teams=j.data.teams||[];S.games=[j.data.game];V.gid=j.data.game.id;V.vt=new Date(j.updated_at).toLocaleTimeString();V.verr=null;R()
+  if(j.data.kind=='team'){const d=j.data;S.teams=d.teams||[];S.games=d.games||[];S.dr=d.dr?{[d.tid]:d.dr}:{};S.cfg=d.cfg||{};V.tid=d.tid;V.vk='team';V.gid=null;V.vt=new Date(j.updated_at).toLocaleTimeString();V.verr=null;return R()}V.vk=null;S.teams=j.data.teams||[];S.games=[j.data.game];V.gid=j.data.game.id;V.vt=new Date(j.updated_at).toLocaleTimeString();V.verr=null;R()
  }catch(e){if(!V.gid)V.verr='載入失敗：'+cloudErr(e.message);R()}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&AU&&!VIEW)cloudSync()});
 window.addEventListener('online',()=>{if(AU&&!VIEW)cloudSync().then(shareSync)});
