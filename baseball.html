@@ -968,9 +968,27 @@ async function cloudOut(){
  try{await sbFetch('/auth/v1/logout',{method:'POST'})}catch(e){}
  AU=null;jset('bb_auth',null);SNC={ts:null,dirty:false};jset('bb_sync',SNC);CL.last=null;CL.sh={};CL.msg='已登出（本機上的資料還在）';R()}
 const useCloud=()=>applyCloud(V.cc.row);
+function mergeData(L,C){
+ const M={...C,...L,teams:[],games:[]};let cf=0,addT=0,addG=0;
+ const tm=new Map();(L.teams||[]).forEach(t=>tm.set(t.id,JSON.parse(JSON.stringify(t))));
+ (C.teams||[]).forEach(t=>{const x=tm.get(t.id);if(!x){tm.set(t.id,JSON.parse(JSON.stringify(t)));addT++;return}
+  const ids=new Set((x.players||[]).map(p=>p.id));(t.players||[]).forEach(p=>{if(!ids.has(p.id)){x.players.push(JSON.parse(JSON.stringify(p)));ids.add(p.id)}});
+  if(x.tmp&&!t.tmp)delete x.tmp});
+ M.teams=[...tm.values()];
+ const gm=new Map();(L.games||[]).forEach(g=>gm.set(g.id,g));
+ (C.games||[]).forEach(g=>{const x=gm.get(g.id);if(!x){gm.set(g.id,g);addG++;return}
+  if(JSON.stringify(x)!==JSON.stringify(g)){cf++;if((g.ev||[]).length>(x.ev||[]).length)gm.set(g.id,g)}});
+ M.games=[...gm.values()];
+ return {M,cf,addT,addG}}
+async function useMerge(){
+ const r=V.cc.row,{M,cf,addT,addG}=mergeData(S,r.data||{});
+ S=M;try{localStorage.setItem('bb',JSON.stringify(S))}catch(e){}
+ SNC.ts=r.updated_at;V.cc=null;SNC.dirty=true;jset('bb_sync',SNC);
+ if(V.gid&&!G())V.gid=null;
+ await cloudPush();CL.msg=`已合併：從雲端補入 ${addT} 支球隊、${addG} 場比賽`+(cf?`；${cf} 場兩邊都有且內容不同，保留事件較多的那份`:'');R()}
 async function useLocal(){SNC.ts=V.cc.row.updated_at;V.cc=null;SNC.dirty=true;await cloudPush();R()}
 function cloudModal(){
- if(V.cc){const r=V.cc.row,d=r.data||{};return `<div class=mo><div class=md><b>雲端和本機的資料不一樣</b><div class=row style="font-size:12px;opacity:.8">雲端：${(d.games||[]).length} 場比賽、${(d.teams||[]).length} 支球隊（${new Date(r.updated_at).toLocaleString()}）<br>本機：${S.games.length} 場比賽、${S.teams.length} 支球隊</div><div class=row>${btn('使用雲端資料（覆蓋本機）','useCloud()')}</div><div class=row>${btn('使用本機資料（覆蓋雲端）','useLocal()')}</div><div class=row>${btn('先不處理','V.cc=null;R()')}</div></div></div>`}
+ if(V.cc){const r=V.cc.row,d=r.data||{};return `<div class=mo><div class=md><b>雲端和本機的資料不一樣</b><div class=row style="font-size:12px;opacity:.8">雲端：${(d.games||[]).length} 場比賽、${(d.teams||[]).length} 支球隊（${new Date(r.updated_at).toLocaleString()}）<br>本機：${S.games.length} 場比賽、${S.teams.length} 支球隊</div><div class=row>${btn('合併兩邊（保留兩邊新增的）','useMerge()','pri')}</div><div class=row style="font-size:12px;opacity:.7">合併不會處理刪除：一邊刪掉的，另一邊還有的會被補回來。</div><div class=row>${btn('使用雲端資料（覆蓋本機）','useCloud()')}</div><div class=row>${btn('使用本機資料（覆蓋雲端）','useLocal()')}</div><div class=row>${btn('先不處理','V.cc=null;R()')}</div></div></div>`}
  const st=CL.msg?`<div class=row style="font-size:12px;opacity:.85">${CL.msg}</div>`:'';
  if(AU)return `<div class=mo onclick="V.cl=false;R()"><div class=md onclick="event.stopPropagation()"><b>☁️ 雲端同步</b><div class=row>已登入：${AU.email||''}</div>${st}${SNC.ts?`<div class=row style="font-size:12px;opacity:.7">上次同步：${new Date(SNC.ts).toLocaleString()}${SNC.dirty?'（有尚未上傳的變更）':''}</div>`:''}<div class=row>${btn('立即同步','cloudNow()','pri')}${btn('修改密碼',"V.pw={};V.pwm=null;R()")}${btn('登出','cloudOut()')}</div><div class=row style="justify-content:flex-end">${btn('關閉','V.cl=false;R()')}</div></div></div>`;
  return `<div class=mo onclick="V.cl=false;R()"><div class=md onclick="event.stopPropagation()"><b>☁️ 登入雲端</b><div class=row style="font-size:12px;opacity:.8">登入後資料會自動同步到雲端，換裝置登入就能取回。沒登入也能照常離線使用。</div><div class=row><input id=cle type=email placeholder="Email" value="${V.cle||''}" style="flex:1" autocomplete="email"></div><div class=row><input id=clp type=password placeholder="密碼（至少 6 碼）" style="flex:1" autocomplete="current-password"></div>${st}<div class=row>${btn('登入',"cloudIn('login')",'pri')}${btn('註冊新帳號',"cloudIn('signup')")}</div><div class=row>${btn('忘記密碼',"cloudForgot()")}</div><div class=row style="justify-content:flex-end">${btn('關閉','V.cl=false;R()')}</div></div></div>`}
