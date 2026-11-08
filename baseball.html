@@ -267,7 +267,7 @@ function calc(g){
     if(dd=='x'){ou.push(r);o.bs[c]=null;parts.push(`${BN[x]}跑者 ${pname(r.id)} 出局`)}
     else if(dd>=4){r.u=true;sc.push(r);o.bs[c]=null;parts.push(`${BN[x]}跑者 ${pname(r.id)} 回本壘得分`)}
     else if(dd>c){r.u=true;mo.push([dd,r]);o.bs[c]=null;parts.push(`${BN[x]}跑者 ${pname(r.id)} 上${BN[dd]}`)}}
-   mo.forEach(([dd,r])=>{if(o.bs[dd])o.collideN++;o.bs[dd]=r});sc.forEach(r=>rn(r,0));fixPastRuns(sc.length);
+   mo.forEach(([dd,r])=>{if(o.bs[dd])o.collideN++;o.bs[dd]=r});sc.forEach(r=>rn(r,0));
    o.E[d0]++;{const key=pi+'_1',f=o.fd[key]||(o.fd[key]={pid:pi,pk:1,PO:0,A:0,E:0,DP:0,TP:0,PB:0,CS:0,SBA:0});f.E++}
    {const t=`投手 ${pname(pi)} 牽制失誤${parts.length?'，'+parts.join('，'):''}`;cur.push({s:t})}
    let ed=0;ou.forEach(()=>{if(!ed)ed=out()});
