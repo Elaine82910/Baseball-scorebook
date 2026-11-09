@@ -553,10 +553,12 @@ const drAll=()=>{drRead();const ds=S.games.filter(g=>g.a==V.dm.tid||g.h==V.dm.ti
 const drOk=()=>{drRead();const{tid,from,to}=V.dm;if(from&&to&&from>to){V.warn='起始日期不能晚於結束日期！';R();return}S.dr=S.dr||{};if(from||to)S.dr[tid]={from,to};else delete S.dr[tid];V.dm=null;R()};
 const gStarted=g=>!!((g.ev&&g.ev.length)||(g.sp&&(g.sp.a||g.sp.h))||(g.lu&&(g.lu.a.some(x=>x.p)||g.lu.h.some(x=>x.p)))||(g.bn&&((g.bn.a||[]).length||(g.bn.h||[]).length)));
 function gnameModal(){const g=S.games.find(x=>x.id==V.gnm);if(!g)return'';const tl=S.teams.filter(t=>!t.tmp||t.id==g.a||t.id==g.h).map(t=>[t.id,t.name]);V.gim=V.gim||g.mode||'formal';
- return `<div class=mo><div class=md><b>修改資訊</b>
+ return `<div class=mo><div class=md><div><b>修改資訊</b>　<span style="color:#888;font-size:13px">${T(g.a)?.name||''} vs ${T(g.h)?.name||''} - ${(g.mode||'formal')=='practice'?'練習':'正式'}模式</span></div>
  <div class=row><div style="display:inline-grid;gap:8px"><input id=gdv type=date value="${g.date||''}"><input id=gnv value="${escA(g.name||'')}" placeholder="比賽名稱" style="width:0;min-width:100%;box-sizing:border-box" onkeydown="if(event.key=='Enter')doGname()"></div></div>
- ${gStarted(g)?`<div style="color:#888;font-size:13px">(客)${T(g.a)?.name||''} vs ${T(g.h)?.name||''}(主) - ${(g.mode||'formal')=='practice'?'練習':'正式'}模式</div>${g.ev&&g.ev.length?'<div style="color:#888;font-size:12px">已開始記錄，無法交換主客隊。</div>':`<div class=row>${btn('⇄ 交換主客隊（保留先發名單）','swapAH()')}</div>`}`:`<div class=row>客隊 <select id=gav>${opt(tl,g.a)}</select> 主隊 <select id=ghv>${opt(tl,g.h)}</select> ${btn('⇄','swapSel()')}</div>
+ ${gStarted(g)?`${g.ev&&g.ev.length?'':`<div class=row>${btn('⇄ 交換主客隊','swapAH()')}</div>`}`:`<div class=row>客隊 <select id=gav>${opt(tl,g.a)}</select> 主隊 <select id=ghv>${opt(tl,g.h)}</select> ${btn('⇄','swapSel()')}</div>
  <div class=row><b style="margin-right:4px">模式</b>${btn('正式',"V.gim='formal';R()",V.gim=='formal'?'pri':'')}${btn('練習',"V.gim='practice';R()",V.gim=='practice'?'pri':'')}</div>`}
+ <div class=row>${btn('📋 複製比賽（僅保留先發名單）','copyG()')}</div>
+ ${gStarted(g)&&g.ev&&g.ev.length?'<div style="color:#888;font-size:12px">已開始記錄，無法交換主客隊。</div>':''}
  <div class=row>${btn('確定','doGname()','pri')}${btn('取消','V.gnm=null;V.gim=null;R()')}</div>
  </div></div>`}
 const startGname=id=>{V.gnm=id;const g=S.games.find(x=>x.id==id);V.gim=g?g.mode||'formal':'formal';R()};
@@ -694,6 +696,7 @@ const toast=t=>{V.toast=t;R();setTimeout(()=>{V.toast=null;R()},1400)};
 const rdAdd=k=>{if(V.rd.seq.length&&V.rd.seq[V.rd.seq.length-1]==k)return;V.rd.seq.push(k);R()};
 const rdBack=()=>{V.rd.seq.pop();R()};
 const rdOk=()=>{if(!V.rd.seq.length)return;V.rv=V.rv||{};V.rv['rd'+V.rd.x]=V.rd.seq.slice();V.rv[V.rd.x]='xr';V.rd=null;R()};
+const copyG=()=>{const g=S.games.find(x=>x.id==V.gnm);if(!g)return;const n=JSON.parse(JSON.stringify(g)),d=new Date(),pad=x=>String(x).padStart(2,'0');n.id=uid();n.ev=[];n.fin=false;delete n.finAt;delete n.txtOvr;n.date=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;n.name=(g.name||'')+'（複製）';const i=S.games.indexOf(g);S.games.splice(i,0,n);V.gnm=null;V.gim=null;V.gid=n.id;V.sub='lu';R()};
 const swapSel=()=>{const a=$('gav'),h=$('ghv');if(!a||!h)return;const t=a.value;a.value=h.value;h.value=t};
 const healSides=g=>{try{if(!g||!g.lu||!g.lu.a||!g.lu.h||(g.ev&&g.ev.length))return false;const own=s=>new Set(((T(g[s])||{}).players||[]).map(p=>p.id)),ids=s=>[...g.lu[s].map(x=>x.p),g.sp&&g.sp[s],...((g.bn&&g.bn[s])||[])].filter(Boolean),oa=own('a'),oh=own('h'),ia=ids('a'),ih=ids('h');
  const bad=(l,mine,other)=>l.length&&l.every(id=>!mine.has(id)&&other.has(id));
