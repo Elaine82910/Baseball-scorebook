@@ -555,7 +555,7 @@ const gStarted=g=>!!((g.ev&&g.ev.length)||(g.sp&&(g.sp.a||g.sp.h))||(g.lu&&(g.lu
 function gnameModal(){const g=S.games.find(x=>x.id==V.gnm);if(!g)return'';const tl=S.teams.filter(t=>!t.tmp||t.id==g.a||t.id==g.h).map(t=>[t.id,t.name]);V.gim=V.gim||g.mode||'formal';
  return `<div class=mo><div class=md><b>修改資訊</b>
  <div class=row><div style="display:inline-grid;gap:8px"><input id=gdv type=date value="${g.date||''}"><input id=gnv value="${escA(g.name||'')}" placeholder="比賽名稱" style="width:0;min-width:100%;box-sizing:border-box" onkeydown="if(event.key=='Enter')doGname()"></div></div>
- ${gStarted(g)?`<div style="color:#888;font-size:13px">(客)${T(g.a)?.name||''} vs ${T(g.h)?.name||''}(主) - ${(g.mode||'formal')=='practice'?'練習':'正式'}模式</div>${g.ev&&g.ev.length?'<div style="color:#888;font-size:12px">已開始記錄，無法交換主客隊。</div>':`<div class=row>${btn('⇄ 交換主客隊（保留先發名單）','swapAH()')}</div>`}`:`<div class=row>客隊 <select id=gav>${opt(tl,g.a)}</select> 主隊 <select id=ghv>${opt(tl,g.h)}</select></div>
+ ${gStarted(g)?`<div style="color:#888;font-size:13px">(客)${T(g.a)?.name||''} vs ${T(g.h)?.name||''}(主) - ${(g.mode||'formal')=='practice'?'練習':'正式'}模式</div>${g.ev&&g.ev.length?'<div style="color:#888;font-size:12px">已開始記錄，無法交換主客隊。</div>':`<div class=row>${btn('⇄ 交換主客隊（保留先發名單）','swapAH()')}</div>`}`:`<div class=row>客隊 <select id=gav>${opt(tl,g.a)}</select> 主隊 <select id=ghv>${opt(tl,g.h)}</select> ${btn('⇄','swapSel()')}</div>
  <div class=row><b style="margin-right:4px">模式</b>${btn('正式',"V.gim='formal';R()",V.gim=='formal'?'pri':'')}${btn('練習',"V.gim='practice';R()",V.gim=='practice'?'pri':'')}</div>`}
  <div class=row>${btn('確定','doGname()','pri')}${btn('取消','V.gnm=null;V.gim=null;R()')}</div>
  </div></div>`}
@@ -694,6 +694,11 @@ const toast=t=>{V.toast=t;R();setTimeout(()=>{V.toast=null;R()},1400)};
 const rdAdd=k=>{if(V.rd.seq.length&&V.rd.seq[V.rd.seq.length-1]==k)return;V.rd.seq.push(k);R()};
 const rdBack=()=>{V.rd.seq.pop();R()};
 const rdOk=()=>{if(!V.rd.seq.length)return;V.rv=V.rv||{};V.rv['rd'+V.rd.x]=V.rd.seq.slice();V.rv[V.rd.x]='xr';V.rd=null;R()};
+const swapSel=()=>{const a=$('gav'),h=$('ghv');if(!a||!h)return;const t=a.value;a.value=h.value;h.value=t};
+const healSides=g=>{try{if(!g||!g.lu||!g.lu.a||!g.lu.h||(g.ev&&g.ev.length))return false;const own=s=>new Set(((T(g[s])||{}).players||[]).map(p=>p.id)),ids=s=>[...g.lu[s].map(x=>x.p),g.sp&&g.sp[s],...((g.bn&&g.bn[s])||[])].filter(Boolean),oa=own('a'),oh=own('h'),ia=ids('a'),ih=ids('h');
+ const bad=(l,mine,other)=>l.length&&l.every(id=>!mine.has(id)&&other.has(id));
+ if(!(bad(ia,oa,oh)&&(!ih.length||bad(ih,oh,oa))))return false;
+ [g.lu.a,g.lu.h]=[g.lu.h,g.lu.a];if(g.bn)[g.bn.a,g.bn.h]=[g.bn.h,g.bn.a];if(g.sp)[g.sp.a,g.sp.h]=[g.sp.h,g.sp.a];return true}catch(e){return false}};
 const swapAH=()=>{const g=S.games.find(x=>x.id==V.gnm);if(!g||(g.ev&&g.ev.length))return;[g.a,g.h]=[g.h,g.a];Object.keys(g).forEach(k=>{const v=g[k];if(k!='ev'&&v&&typeof v=='object'&&!Array.isArray(v)&&'a' in v&&'h' in v)[v.a,v.h]=[v.h,v.a]});R()};
 const doGname=()=>{const g=S.games.find(x=>x.id==V.gnm);if(!g){V.gnm=null;V.gim=null;R();return}
  if(gStarted(g)){g.date=$('gdv').value||g.date;g.name=($('gnv').value||'').trim();V.gnm=null;V.gim=null;R();return}
@@ -871,6 +876,7 @@ const chooseSP=(boxId,pid)=>{const s=boxId.split('-')[1];setSP(s,pid)};
 const resetBatInp=(s,i)=>{const g=G();if(!g)return;const bp=T(g[s]).players.find(p=>p.id==g.lu[s][i].p),inp=document.getElementById('inp-'+s+'-'+i);if(inp)inp.value=bp?plbl(bp):'';const box=document.getElementById('sg-'+s+'-'+i);if(box)box.innerHTML=''};
 const resetSPInp=s=>{const g=G();if(!g)return;const sp=(g.sp||{})[s]||'',spP=T(g[s]).players.find(p=>p.id==sp),inp=document.getElementById('inpsp-'+s);if(inp)inp.value=spP?plbl(spP):'';const box=document.getElementById('sgsp-'+s);if(box)box.innerHTML=''};
 function lineup(g){
+ healSides(g);
  return `<div class=c><input type=number min=1 max=15 value=${g.inn||9} style="width:3ch" onchange="G().inn=+this.value||9;R()"> 局制</div>`+['a','h'].map(s=>{const t=T(g[s]),sp=(g.sp||{})[s]||'',spP=t.players.find(p=>p.id==sp);
  return `<div class=c><div class=row><h3 style="margin:0">${t.name}（${s=='a'?'客':'主'}）先發</h3>${t.tmp?`<span style="margin-left:auto">${btn('新增球隊',`saveTmpTeam('${t.id}')`)}</span>`:''}</div><div class=row>先發投手 <input id="inpsp-${s}" style="width:8em" enterkeyhint="enter" placeholder="輸入背號或姓名" value="${spP?plbl(spP):''}" oninput="filterP('${g[s]}',this.value,'sgsp-${s}')" onkeydown="enterPick(event,'${g[s]}',this.value,'sgsp-${s}')" onblur="setTimeout(()=>resetSPInp('${s}'),150)"></div><div id="sgsp-${s}" class=sugbox></div>`+g.lu[s].map((x,i)=>{const bp=t.players.find(p=>p.id==x.p);return `<div class=row>${i+1}棒<input id="inp-${s}-${i}" style="width:120px" enterkeyhint="enter" placeholder="輸入背號或姓名" value="${bp?plbl(bp):''}" oninput="filterP('${g[s]}',this.value,'sg-${s}-${i}')" onkeydown="enterPick(event,'${g[s]}',this.value,'sg-${s}-${i}')" onblur="setTimeout(()=>resetBatInp('${s}',${i}),150)"><select onchange="lpos('${s}',${i},this.value)">${opt(POSB(),x.pos)}</select></div><div id="sg-${s}-${i}" class=sugbox></div>`}).join('')
  +`<h4>本場比賽候補名單 <select onchange="V.bf=V.bf||{};V.bf['${s}']=this.value;R()"><option value="" ${!(V.bf&&V.bf[s])?'selected':''}>全部</option><option value="P" ${V.bf&&V.bf[s]=='P'?'selected':''}>投手</option><option value="C" ${V.bf&&V.bf[s]=='C'?'selected':''}>捕手</option><option value="IF" ${V.bf&&V.bf[s]=='IF'?'selected':''}>內野</option><option value="OF" ${V.bf&&V.bf[s]=='OF'?'selected':''}>外野</option><option value="UN" ${V.bf&&V.bf[s]=='UN'?'selected':''}>未指定</option></select> ${btn(bnAllOn(g,s)?'取消全選':'全選',`selAllBn('${s}')`)}</h4><div class=cklist>`+t.players.filter(p=>!g.lu[s].some(x=>x.p==p.id)&&p.id!=sp&&(!(V.bf&&V.bf[s])||(V.bf[s]=='UN'?!posCat(p.pos):posCat(p.pos)==V.bf[s]))).map(p=>`<label class=ck><input type=checkbox ${g.bn[s].includes(p.id)?'checked':''} onchange="bnc('${s}','${p.id}',this.checked)"><span>${pn(p.id)}</span>${posBadge(p.pos)}</label>`).join('')+`</div>`+(t.tmp?`<div class=row><input id="bnn-${s}" placeholder="輸入背號或姓名新增球員" enterkeyhint="enter" style="flex:1" onkeydown="if((event.key=='Enter'||event.keyCode==13)&&!event.isComposing){event.preventDefault();addBnP('${s}')}">${btn('＋ 新增',`addBnP('${s}')`,'pri')}</div>`:'')+`</div>`}).join('')}
@@ -1094,5 +1100,5 @@ async function vFetch(){
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&AU&&!VIEW)cloudSync()});
 window.addEventListener('online',()=>{if(AU&&!VIEW)cloudSync().then(shareSync)});
 
-if(VIEW){V.sub='rec';vFetch();setInterval(()=>{if(!document.hidden&&Date.now()-(V.vl||0)>=(V.vk=='team'?600000:9000))vFetch()},5000)}else{R();cloudHash().then(()=>{if(AU)cloudSync().then(shareSync)})}
+if(VIEW){V.sub='rec';vFetch();setInterval(()=>{if(!document.hidden&&Date.now()-(V.vl||0)>=(V.vk=='team'?600000:9000))vFetch()},5000)}else{S.games.forEach(healSides);R();cloudHash().then(()=>{if(AU)cloudSync().then(shareSync)})}
 </script></body></html>
