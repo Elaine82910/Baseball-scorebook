@@ -453,7 +453,7 @@ function calc(g){
    if(pid!=cur){o.gone[side].push(cur);o.lu[side][slot]=pid;o.hist[side][slot].push({pid,tag:'DEF',positions:[POSE[label]||'']});note(`更換守備：${pn(pid)} ➡︎ ${FN[POSN[label]]||label||''}`)}
    else{const hs=o.hist[side][slot],lastSt=hs[hs.length-1];if(lastSt)lastSt.positions.push(POSE[label]||'');note(`更換守備：${pn(pid)} ➡︎ ${FN[POSN[label]]||label||''}`)}
    o.pos[side][slot]=label;if(label=='投'){o.pit[side]=pid;Q(pid);pitEnter(side,pid);o.pitOrder[side].push(pid)}delete o.pendDef[side][slot]}
-  else if(e.t=='adj'){if(e.scope=='bat'){const b=B(e.pid);b[e.field]=(b[e.field]||0)+e.delta}else if(e.scope=='pit'){const q=Q(e.pid);q[e.field]=(q[e.field]||0)+e.delta}else if(e.scope=='fd'){const f=F(e.pid,e.pk);f[e.field]=(f[e.field]||0)+e.delta}}
+  else if(e.t=='adj'){const sdOf=id=>{const ta=T(g.a),th=T(g.h);return ta&&ta.players.some(p=>p.id==id)?'a':(th&&th.players.some(p=>p.id==id)?'h':null)},sd=sdOf(e.pid);if(sd&&((e.scope=='bat'&&e.field=='H')||(e.scope=='fd'&&e.field=='E')))o[e.field=='H'?'H':'E'][sd]+=e.delta;if(e.scope=='bat'){const b=B(e.pid);b[e.field]=(b[e.field]||0)+e.delta}else if(e.scope=='pit'){const q=Q(e.pid);q[e.field]=(q[e.field]||0)+e.delta}else if(e.scope=='fd'){const f=F(e.pid,e.pk);f[e.field]=(f[e.field]||0)+e.delta}}
  };
  g.ev.forEach(e=>{if(o.over&&e.t!='adj')return;oc=0;mk=null;noAuto=false;H(e);if(oc&&mk&&!noAuto)mk.s+=`，${['','一','兩','三'][o.lo]}人出局`;if(o.deferredDef&&o.deferredDef.length){o.deferredDef.forEach(t=>o.log.push({in:o.in,top:o.top,sum:t}));o.deferredDef=[]}if(!o.over&&!o.top&&o.in>=N&&tot(o,'h')>tot(o,'a')){o.over=1;o.wo=1}});
  o.cur=cur;
@@ -775,7 +775,7 @@ function agg(tid,rng,upto){const t=T(tid),r={bat:{},df:{},pt:{}},ui=upto?S.games
   t.players.forEach(p=>{const id=p.id,b=o.bat[id],inLu=g.lu[s].some(x=>x.p==id);
    if(b||inLu){const a=r.bat[id];a.G++;if(b)for(const k in b)a[k]+=b[k]}
    const fdKeys=Object.keys(o.fd).filter(k=>o.fd[k].pid==id);if(fdKeys.length||inLu||o.gone[s].includes(id)||o.pit[s]==id){const a=r.df[id];a.G++;fdKeys.forEach(k=>{const f=o.fd[k],pe=POSE[POSNAME[f.pk]]||'?';const bkt=a.pos[pe]=a.pos[pe]||{PO:0,A:0,E:0,DP:0,TP:0,PB:0,CS:0,SBA:0};['PO','A','E','DP','TP','PB','CS','SBA'].forEach(kk=>bkt[kk]+=f[kk])})}
-   const q=o.pt[id];if(q){const a=r.pt[id];a.G++;['outs','P','S','B','K','BB','IBB','HBP','H','HR','WP','BK','R','ER','BF','AB','GS','REL','SV','HLD','XBH'].forEach(k=>a[k]+=q[k]||0);if(g.fin||o.over){if(q.W)a.W++;else if(q.L)a.L++;else a.ND++}}})});
+   const q=o.pt[id];if(q){const a=r.pt[id];a.G++;['outs','P','S','B','K','BB','IBB','HBP','H','HR','WP','BK','R','ER','BF','AB','GS','REL','SV','HLD','XBH'].forEach(k=>a[k]=(a[k]||0)+(q[k]||0));if(g.fin||o.over){if(q.W)a.W++;else if(q.L)a.L++;else a.ND++}}})});
  r.teamG=teamG;
  return r}
 const togCol=(tab,k)=>{S.cfg=S.cfg||{};S.cfg[tab]=S.cfg[tab]||{};S.cfg[tab][k]=S.cfg[tab][k]===false;R()};
@@ -832,7 +832,7 @@ function teamTeamData(t){const A=agg(t.id,(S.dr&&S.dr[t.id])||null),G=A.teamG||0
  const T3=[
   ['打擊',[['出賽數',bt.G],['打席',bt.PA],['打數',bt.AB],['得分',bt.R],['打點',bt.RBI],['安打',bt.H],['長打',bt.d2+bt.d3+bt.HR],['壘打數',TB],['三振',bt.K],['四壞',bt.BB],['盜壘成功',bt.SB],['打擊率',f3(bt.H/bt.AB)],['上壘率',f3(obp(bt))],['長打率',f3(slg(bt))],['OPS',f3(obp(bt)+slg(bt))]]],
   ['守備',[['出賽數',df.G],['守備機會',df.PO+df.A+df.E],['刺殺',df.PO],['助殺',df.A],['失誤',df.E],['雙殺',df.DP],['三殺',df.TP],['牽制出局',df.PKO],['補逸',df.PB],['阻殺',df.CS],['被盜',df.SBA],['守備率',f3((df.PO+df.A)/(df.PO+df.A+df.E))]]],
-  ['投球',[['出賽數',pt.G],['面對打席',pt.BF],['投球數',pt.P],['被安打',pt.H],['被長打',pt.XBH],['四死球',pt.BB+pt.HBP],['奪三振',pt.K],['暴投',pt.WP],['犯規',pt.BK],['失分',pt.R],['自責分',pt.ER],['ERA',f2(pt.ER*27/pt.outs)],['WHIP',f2((pt.BB+pt.H)*3/pt.outs)],['BA',f3(pt.H/pt.AB)]]]];
+  ['投球',[['出賽數',pt.G],['局數',Math.floor(pt.outs/3)+'.'+pt.outs%3],['面對打席',pt.BF],['投球數',pt.P],['被安打',pt.H],['被長打',pt.XBH],['四死球',pt.BB+pt.HBP],['奪三振',pt.K],['暴投',pt.WP],['犯規',pt.BK],['失分',pt.R],['自責分',pt.ER],['ERA',f2(pt.ER*27/pt.outs)],['WHIP',f2((pt.BB+pt.H)*3/pt.outs)],['BA',f3(pt.H/pt.AB)]]]];
  return T3}
 function teamTeam(t){const T3=teamTeamData(t);
  const rngTxt=(S.dr&&S.dr[t.id])?`<div class=lg2>統計區間：${(S.dr[t.id].from||'最早').replace(/-/g,'/')} ～ ${(S.dr[t.id].to||'最新').replace(/-/g,'/')}</div>`:'';
